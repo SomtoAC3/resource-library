@@ -14,7 +14,6 @@ import { AddResourceModal } from "./AddResourceModal";
 import { getTint, getMark, getKind } from "@/lib/resource-utils";
 import { useBoard } from "@/lib/use-board";
 import { looksLikeUrl, toFullUrl, detectMode } from "@/lib/url-utils";
-import { Recommendations } from "./Recommendations";
 import { CATEGORIES } from "@/lib/types";
 import type { Resource } from "@/lib/types";
 
@@ -207,7 +206,6 @@ export function BoardHome({ resources, totalCount }: Props) {
 
   const mode = detectMode(value);
   const urlMode = mode === "submit";
-  const [recoQuery, setRecoQuery] = useState<string | null>(null);
 
   // Board state: exclusion-based — show latest unless hidden
   const { ready: boardReady, hide, show, isHidden, getPosition, savePosition } = useBoard();
@@ -298,7 +296,7 @@ export function BoardHome({ resources, totalCount }: Props) {
     }
     const m = detectMode(t);
     if (m === "submit") { setAddUrl(toFullUrl(t)); setValue(""); }
-    else if (m === "recommend") { setRecoQuery(t); setValue(""); }
+    else if (m === "recommend") { router.push(`/recommend?q=${encodeURIComponent(t)}`); }
     else router.push(`/search?q=${encodeURIComponent(t)}`);
   };
 
@@ -430,19 +428,7 @@ export function BoardHome({ resources, totalCount }: Props) {
                 )}
               </div>
 
-              <p style={{ fontSize: "0.76em", marginTop: 12, color: "var(--ds-fg-subtle)" }}>
-                Search resources, paste a URL, or describe what you&rsquo;re building.
-              </p>
-
-              {/* AI Recommendations panel */}
-              {recoQuery && (
-                <Recommendations
-                  query={recoQuery}
-                  onClose={() => setRecoQuery(null)}
-                />
-              )}
-
-              <div className="stage-cats" style={{ marginTop: recoQuery ? 24 : 0 }}>
+              <div className="stage-cats">
                 {CATEGORIES.map(c => (
                   <Link key={c} href={`/search?category=${encodeURIComponent(c)}`} className="chip">{c}</Link>
                 ))}

@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { getTint, getMark, getKind } from "@/lib/resource-utils";
-import { looksLikeUrl, toFullUrl } from "@/lib/url-utils";
+import { looksLikeUrl, toFullUrl, detectMode } from "@/lib/url-utils";
 import { AddResourceModal } from "./AddResourceModal";
 
 interface Suggestion {
@@ -82,7 +82,9 @@ export function SearchBar({ className, size = "md" }: Props) {
       router.push(`/resources/${suggestions[activeIndex].id}`);
       setOpen(false); return;
     }
-    if (urlMode) { setStashUrl(toFullUrl(trimmed)); return; }
+    const m = detectMode(trimmed);
+    if (m === "submit") { setStashUrl(toFullUrl(trimmed)); return; }
+    if (m === "recommend") { router.push(`/recommend?q=${encodeURIComponent(trimmed)}`); return; }
     navigate(trimmed);
   };
 

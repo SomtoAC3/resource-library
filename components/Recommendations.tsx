@@ -77,7 +77,7 @@ function RecoCard({ rec }: { rec: Recommendation }) {
 
 interface Props {
   query: string;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export function Recommendations({ query, onClose }: Props) {
@@ -120,14 +120,16 @@ export function Recommendations({ query, onClose }: Props) {
             {status === "loading" ? "Searching the stash…" : status === "success" && result?.note ? result.note : ""}
           </p>
         </div>
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={onClose}
-          aria-label="Close recommendations"
-        >
-          ✕
-        </button>
+        {onClose && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={onClose}
+            aria-label="Close recommendations"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* Loading skeletons */}
