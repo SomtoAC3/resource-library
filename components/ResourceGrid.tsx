@@ -3,7 +3,7 @@
 import { MemoCard } from "./MemoCard";
 import { ResourceRow } from "./ResourceCard";
 import { EmptyState } from "./EmptyState";
-import { usePins } from "@/lib/use-pins";
+import { useBoard } from "@/lib/use-board";
 import type { Resource } from "@/lib/types";
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function ResourceGrid({ resources, view = "gallery" }: Props) {
-  const { isPinned, addPin, removePin } = usePins();
+  const { isHidden, hide, show } = useBoard();
 
   if (resources.length === 0) {
     return <EmptyState />;
@@ -34,8 +34,8 @@ export function ResourceGrid({ resources, view = "gallery" }: Props) {
         <MemoCard
           key={r.id}
           resource={r}
-          pinned={isPinned(r.id)}
-          onTogglePin={() => isPinned(r.id) ? removePin(r.id) : addPin(r.id)}
+          pinned={!isHidden(r.id)}
+          onTogglePin={() => isHidden(r.id) ? show(r.id) : hide(r.id)}
         />
       ))}
     </div>

@@ -12,7 +12,7 @@ import Link from "next/link";
 import { MemoCard } from "./MemoCard";
 import { AddResourceModal } from "./AddResourceModal";
 import { getTint, getMark, getKind } from "@/lib/resource-utils";
-import { usePins } from "@/lib/use-pins";
+import { useBoard } from "@/lib/use-board";
 import { looksLikeUrl, toFullUrl } from "@/lib/url-utils";
 import { CATEGORIES } from "@/lib/types";
 import type { Resource } from "@/lib/types";
@@ -196,7 +196,7 @@ export function BoardHome({ resources, totalCount }: Props) {
 
   const [value, setValue] = useState("");
   const [addUrl, setAddUrl] = useState<string | null>(null);
-  const [positions, setPositions] = useState<Map<string, Position>>(new Map());
+  const [livePositions, setLivePositions] = useState<Map<string, Position>>(new Map());
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [clip, setClip] = useState<string | null>(null);
   const [clipDismissed, setClipDismissed] = useState(false);
@@ -206,48 +206,40 @@ export function BoardHome({ resources, totalCount }: Props) {
 
   const urlMode = looksLikeUrl(value.trim());
 
-  // Persistent pins
-  const defaultIds = resources.slice(0, 6).map(r => r.id);
-  const { pins, ready: pinsReady, addPin, removePin, updatePosition, isPinned } = usePins(defaultIds);
+  // Board state: exclusion-based — show latest unless hidden
+  const { ready: boardReady, hide, show, isHidden, getPosition, savePosition } = useBoard();
 
-  // Map pinned resource IDs → Resource objects
-  const pinnedResources = pins
-    .map(p => resources.find(r => r.id === p.id))
-    .filter(Boolean) as Resource[];
+  // Resources to scatter: latest 6 that haven't been hidden
+  const visibleResources = resources.filter(r => !isHidden(r.id)).slice(0, 6);
 
-  // Compute scatter positions: use saved if valid, else compute default from stage
+  // Compute live scatter positions from saved or default layout
   useEffect(() => {
     const stage = stageRef.current;
-    if (!stage || !pinsReady) return;
+    if (!stage || !boardReady) return;
     const W = stage.clientWidth;
     const H = stage.clientHeight;
 
-    setPositions(prev => {
+    setLivePositions(prev => {
       const next = new Map(prev);
-      pins.forEach((pin, i) => {
-        if (!next.has(pin.id)) {
-          const pos = pin.x >= 0 && pin.y >= 0
-            ? { x: pin.x, y: pin.y }
-            : defaultPos(i, W, H);
-          next.set(pin.id, pos);
+      visibleResources.forEach((r, i) => {
+        if (!next.has(r.id)) {
+          const saved = getPosition(r.id);
+          next.set(r.id, saved ?? defaultPos(i, W, H));
         }
       });
-      // Remove positions for unpinned resources
+      // Remove stale positions for resources no longer visible
       for (const key of next.keys()) {
-        if (!pins.some(p => p.id === key)) next.delete(key);
+        if (!visibleResources.some(r => r.id === key)) next.delete(key);
       }
       return next;
     });
-  }, [pins, pinsReady]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardReady, visibleResources.map(r => r.id).join(",")]);
 
   const movePin = useCallback((id: string, x: number, y: number) => {
-    setPositions(prev => {
-      const next = new Map(prev);
-      next.set(id, { x, y });
-      return next;
-    });
-    updatePosition(id, x, y);
-  }, [updatePosition]);
+    setLivePositions(prev => { const next = new Map(prev); next.set(id, { x, y }); return next; });
+    savePosition(id, x, y);
+  }, [savePosition]);
 
   // Clipboard awareness
   useEffect(() => {
@@ -329,8 +321,8 @@ export function BoardHome({ resources, totalCount }: Props) {
 
         {/* Scattered draggable pins */}
         <div className="scatter-around">
-          {pinsReady && pinnedResources.map(r => {
-            const pos = positions.get(r.id);
+          {boardReady && visibleResources.map(r => {
+            const pos = livePositions.get(r.id);
             if (!pos) return null;
             return (
               <DraggablePin key={r.id} pos={pos}
@@ -338,7 +330,7 @@ export function BoardHome({ resources, totalCount }: Props) {
                 onOpen={() => router.push(`/resources/${r.id}`)}>
                 <MemoCard resource={r} noLink
                   pinned={true}
-                  onTogglePin={() => removePin(r.id)} />
+                  onTogglePin={() => hide(r.id)} />
               </DraggablePin>
             );
           })}
