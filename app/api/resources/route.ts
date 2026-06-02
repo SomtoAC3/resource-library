@@ -32,17 +32,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "URL must use http or https" }, { status: 400 });
   }
 
-  // Normalize: strip trailing slash so https://x.com/ and https://x.com deduplicate
-  const normalizedUrl = parsed.toString().replace(/\/$/, "") || parsed.toString();
+  // Normalize URL: lowercase host, strip www, strip trailing slash
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+  const normalizedUrl =
+    `${parsed.protocol}//${host}${parsed.port ? `:${parsed.port}` : ""}${parsed.pathname}`
+      .replace(/\/$/, "") +
+    (parsed.search || "");
 
   const supabase = await createClient();
 
-  // Dedup: return existing resource if this URL was already stashed
-  const { data: existing } = await supabase
+  // Dedup: use limit(1) so it works even if duplicates already exist in DB
+  const { data: existingRows } = await supabase
     .from("resources")
     .select("*")
-    .eq("url", normalizedUrl)
-    .maybeSingle();
+    .or(`url.eq.${normalizedUrl},url.eq.${normalizedUrl}/`)
+    .limit(1);
+
+  const existing = existingRows?.[0] ?? null;
 
   if (existing) {
     return NextResponse.json(existing, { status: 200 });
@@ -52,7 +58,7 @@ export async function POST(req: NextRequest) {
     .from("resources")
     .insert({
       url: normalizedUrl,
-      domain: parsed.hostname.replace(/^www\./, ""),
+      domain: host,
       status: "processing",
       source: body.source ?? "web",
       submitted_by: body.submitted_by ?? null,
