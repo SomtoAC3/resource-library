@@ -10,7 +10,7 @@ async function getHomeData(): Promise<{ resources: Resource[]; count: number }> 
     .select("*", { count: "exact" })
     .eq("status", "ready")
     .order("created_at", { ascending: false })
-    .limit(8);
+    .limit(100);
 
   return { resources: data ?? [], count: count ?? 0 };
 }

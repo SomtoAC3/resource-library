@@ -27,9 +27,12 @@ interface Props {
   style?: React.CSSProperties;
   /** Render as a div instead of a Link — use inside DraggablePin */
   noLink?: boolean;
+  /** Show a +/- pin toggle badge */
+  pinned?: boolean;
+  onTogglePin?: (e: React.MouseEvent) => void;
 }
 
-export function MemoCard({ resource, style, noLink = false }: Props) {
+export function MemoCard({ resource, style, noLink = false, pinned, onTogglePin }: Props) {
   const h = hashStr(resource.id);
   const rot = ((h % 9) - 4) * 1.05;
   const tint = getTint(resource);
@@ -47,6 +50,16 @@ export function MemoCard({ resource, style, noLink = false }: Props) {
 
   const inner = (
     <>
+      {onTogglePin && (
+        <button
+          type="button"
+          className="memo-pin-btn"
+          title={pinned ? "Remove from board" : "Add to board"}
+          onClick={e => { e.preventDefault(); e.stopPropagation(); onTogglePin(e); }}
+        >
+          {pinned ? "−" : "+"}
+        </button>
+      )}
       <div className="memo-eye">{eyebrowParts.join(" · ") || "Resource"}</div>
       <h3 className="memo-title">{resource.title ?? resource.domain}</h3>
       <HandUnderline />

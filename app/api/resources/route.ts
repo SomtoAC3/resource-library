@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { processResource } from "@/lib/process";
+import { normalizeUrl, urlVariants, toFullUrl, looksLikeUrl } from "@/lib/url-utils";
 
 export const maxDuration = 60;
 
@@ -21,9 +22,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "url is required" }, { status: 400 });
   }
 
+  // Accept bare domains like "magnific.com" — prepend https:// if needed
+  if (!looksLikeUrl(url)) {
+    return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+  }
+  const fullUrl = toFullUrl(url);
+
   let parsed: URL;
   try {
-    parsed = new URL(url);
+    parsed = new URL(fullUrl);
   } catch {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
@@ -32,21 +39,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "URL must use http or https" }, { status: 400 });
   }
 
-  // Normalize URL: lowercase host, strip www, strip trailing slash
-  const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-  const normalizedUrl =
-    `${parsed.protocol}//${host}${parsed.port ? `:${parsed.port}` : ""}${parsed.pathname}`
-      .replace(/\/$/, "") +
-    (parsed.search || "");
+  const normalizedUrl = normalizeUrl(fullUrl);
+  const domain = parsed.hostname.toLowerCase().replace(/^www\./, "");
 
   const supabase = await createClient();
 
-  // Dedup: check both with and without trailing slash using .in() which
-  // handles URLs with special characters (://) correctly unlike .or()
+  // Dedup: check all www/slash variants so magnific.com and www.magnific.com both match
   const { data: existingRows } = await supabase
     .from("resources")
     .select("*")
-    .in("url", [normalizedUrl, `${normalizedUrl}/`])
+    .in("url", urlVariants(normalizedUrl))
     .limit(1);
 
   const existing = existingRows?.[0] ?? null;
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
     .from("resources")
     .insert({
       url: normalizedUrl,
-      domain: host,
+      domain,
       status: "processing",
       source: body.source ?? "web",
       submitted_by: body.submitted_by ?? null,

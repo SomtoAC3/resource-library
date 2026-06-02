@@ -12,6 +12,8 @@ import Link from "next/link";
 import { MemoCard } from "./MemoCard";
 import { AddResourceModal } from "./AddResourceModal";
 import { getTint, getMark, getKind } from "@/lib/resource-utils";
+import { usePins } from "@/lib/use-pins";
+import { looksLikeUrl, toFullUrl } from "@/lib/url-utils";
 import { CATEGORIES } from "@/lib/types";
 import type { Resource } from "@/lib/types";
 
@@ -25,16 +27,9 @@ interface Suggestion {
 
 // ── helpers ────────────────────────────────────────────────────────────
 
-function isUrl(value: string): boolean {
-  const t = value.trim();
-  if (/\s/.test(t)) return false;
-  return /^https?:\/\//i.test(t) || /^[\w-]+(\.[\w-]+)+(\/|$)/.test(t);
-}
-
 const MEMO_SIZE = 232;
 
-// Fractional positions (relative to stage width/height)
-const POS_SPECS = [
+const DEFAULT_POS_SPECS = [
   { top: 0.03,  left:  0.02  },
   { top: 0.37,  left:  0.085 },
   { bottom: 0.04, left: 0.025 },
@@ -50,6 +45,14 @@ const NOTE_COLORS = [
 
 interface Position { x: number; y: number; }
 interface StickyNote { id: string; x: number; y: number; color: string; }
+
+function defaultPos(index: number, W: number, H: number): Position {
+  const spec = DEFAULT_POS_SPECS[index % DEFAULT_POS_SPECS.length] as any;
+  return {
+    x: spec.left != null ? spec.left * W : W - spec.right * W - MEMO_SIZE,
+    y: spec.top  != null ? spec.top  * H : H - spec.bottom * H - MEMO_SIZE,
+  };
+}
 
 // ── Icons ───────────────────────────────────────────────────────────────
 
@@ -82,10 +85,7 @@ function ArrowRightIcon() {
 // ── DraggablePin ────────────────────────────────────────────────────────
 
 function DraggablePin({
-  pos,
-  onMove,
-  onOpen,
-  children,
+  pos, onMove, onOpen, children,
 }: {
   pos: Position;
   onMove: (x: number, y: number) => void;
@@ -93,9 +93,7 @@ function DraggablePin({
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const drag = useRef<{
-    sx: number; sy: number; ox: number; oy: number; moved: boolean;
-  } | null>(null);
+  const drag = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button != null && e.button !== 0) return;
@@ -105,31 +103,23 @@ function DraggablePin({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    const d = drag.current;
-    if (!d) return;
-    const dx = e.clientX - d.sx;
-    const dy = e.clientY - d.sy;
+    const d = drag.current; if (!d) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) d.moved = true;
     onMove(d.ox + dx, d.oy + dy);
   };
 
   const onPointerUp = () => {
-    const d = drag.current;
-    drag.current = null;
+    const d = drag.current; drag.current = null;
     ref.current?.classList.remove("dragging");
     if (d && !d.moved) onOpen();
   };
 
   return (
-    <div
-      ref={ref}
-      className="around-card"
+    <div ref={ref} className="around-card"
       style={{ left: pos.x, top: pos.y, touchAction: "none" }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-    >
+      onPointerDown={onPointerDown} onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
       {children}
     </div>
   );
@@ -137,12 +127,7 @@ function DraggablePin({
 
 // ── StickyNote ──────────────────────────────────────────────────────────
 
-function StickyNote({
-  note,
-  onClose,
-  onSubmit,
-  onMove,
-}: {
+function StickyNote({ note, onClose, onSubmit, onMove }: {
   note: StickyNote;
   onClose: () => void;
   onSubmit: (url: string) => void;
@@ -155,8 +140,8 @@ function StickyNote({
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const ready = val.trim() && isUrl(val.trim());
-  const stash = () => { if (ready) onSubmit(val.trim()); };
+  const ready = val.trim() && looksLikeUrl(val.trim());
+  const stash = () => { if (ready) onSubmit(toFullUrl(val.trim())); };
 
   const onPointerDown = (e: React.PointerEvent) => {
     const target = e.target as Element;
@@ -167,42 +152,27 @@ function StickyNote({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    const d = drag.current;
-    if (!d) return;
+    const d = drag.current; if (!d) return;
     onMove(d.ox + (e.clientX - d.sx), d.oy + (e.clientY - d.sy));
   };
 
-  const onPointerUp = () => {
-    drag.current = null;
-    ref.current?.classList.remove("dragging");
-  };
+  const onPointerUp = () => { drag.current = null; ref.current?.classList.remove("dragging"); };
 
   return (
-    <div
-      ref={ref}
-      className="around-card"
+    <div ref={ref} className="around-card"
       style={{ left: note.x, top: note.y, touchAction: "none" }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-    >
+      onPointerDown={onPointerDown} onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
       <div className="sticky-note" style={{ "--paper": note.color } as CSSProperties}>
-        <button type="button" className="note-x" onClick={onClose} aria-label="Remove note">
-          ✕
-        </button>
+        <button type="button" className="note-x" onClick={onClose} aria-label="Remove note">✕</button>
         <div className="memo-eye" style={{ opacity: 0.6 }}>new pin</div>
-        <textarea
-          ref={inputRef}
-          className="note-input"
-          placeholder="add a link to stash it…"
-          value={val}
+        <textarea ref={inputRef} className="note-input"
+          placeholder="add a link to stash it…" value={val}
           onChange={e => setVal(e.target.value)}
           onKeyDown={e => {
             if (e.key === "Enter") { e.preventDefault(); stash(); }
             else if (e.key === "Escape") onClose();
-          }}
-        />
+          }} />
         <div className="note-foot">
           <span className="note-hint">{ready ? "↵ to stash" : "paste a link"}</span>
         </div>
@@ -221,10 +191,12 @@ interface Props {
 export function BoardHome({ resources, totalCount }: Props) {
   const router = useRouter();
   const stageRef = useRef<HTMLDivElement>(null);
+  const searchWrapRef = useRef<HTMLDivElement>(null);
+  const sugDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [value, setValue] = useState("");
   const [addUrl, setAddUrl] = useState<string | null>(null);
-  const [positions, setPositions] = useState<Position[] | null>(null);
+  const [positions, setPositions] = useState<Map<string, Position>>(new Map());
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [clip, setClip] = useState<string | null>(null);
   const [clipDismissed, setClipDismissed] = useState(false);
@@ -232,89 +204,89 @@ export function BoardHome({ resources, totalCount }: Props) {
   const [sugOpen, setSugOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  const searchWrapRef = useRef<HTMLDivElement>(null);
-  const sugDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const urlMode = looksLikeUrl(value.trim());
 
-  const trimmed = value.trim();
-  const urlMode = isUrl(trimmed);
+  // Persistent pins
+  const defaultIds = resources.slice(0, 6).map(r => r.id);
+  const { pins, ready: pinsReady, addPin, removePin, updatePosition, isPinned } = usePins(defaultIds);
 
-  // Compute absolute scatter positions from stage dimensions
+  // Map pinned resource IDs → Resource objects
+  const pinnedResources = pins
+    .map(p => resources.find(r => r.id === p.id))
+    .filter(Boolean) as Resource[];
+
+  // Compute scatter positions: use saved if valid, else compute default from stage
   useEffect(() => {
     const stage = stageRef.current;
-    if (!stage) return;
+    if (!stage || !pinsReady) return;
     const W = stage.clientWidth;
     const H = stage.clientHeight;
-    setPositions(
-      POS_SPECS.map(p => ({
-        x: "left" in p
-          ? (p as any).left * W
-          : W - (p as any).right * W - MEMO_SIZE,
-        y: "top" in p
-          ? (p as any).top * H
-          : H - (p as any).bottom * H - MEMO_SIZE,
-      }))
-    );
-  }, []);
+
+    setPositions(prev => {
+      const next = new Map(prev);
+      pins.forEach((pin, i) => {
+        if (!next.has(pin.id)) {
+          const pos = pin.x >= 0 && pin.y >= 0
+            ? { x: pin.x, y: pin.y }
+            : defaultPos(i, W, H);
+          next.set(pin.id, pos);
+        }
+      });
+      // Remove positions for unpinned resources
+      for (const key of next.keys()) {
+        if (!pins.some(p => p.id === key)) next.delete(key);
+      }
+      return next;
+    });
+  }, [pins, pinsReady]);
+
+  const movePin = useCallback((id: string, x: number, y: number) => {
+    setPositions(prev => {
+      const next = new Map(prev);
+      next.set(id, { x, y });
+      return next;
+    });
+    updatePosition(id, x, y);
+  }, [updatePosition]);
 
   // Clipboard awareness
   useEffect(() => {
     let cancelled = false;
-
     const consider = (text: string) => {
       const t = text.trim();
-      if (!cancelled && t && isUrl(t) && !clipDismissed) setClip(t);
+      if (!cancelled && t && looksLikeUrl(t) && !clipDismissed) setClip(t);
     };
-
     const tryRead = async () => {
-      try {
-        if (navigator.clipboard?.readText) consider(await navigator.clipboard.readText());
-      } catch { /* permission denied — paste listener covers it */ }
+      try { if (navigator.clipboard?.readText) consider(await navigator.clipboard.readText()); }
+      catch { /* permission denied */ }
     };
-
     tryRead();
-
     const onFocus = () => tryRead();
     const onPaste = (e: ClipboardEvent) => {
       const t = e.clipboardData?.getData("text") ?? "";
-      if (isUrl(t.trim())) { setClipDismissed(false); setClip(t.trim()); }
+      if (looksLikeUrl(t.trim())) { setClipDismissed(false); setClip(t.trim()); }
     };
-
     window.addEventListener("focus", onFocus);
     window.addEventListener("paste", onPaste);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("paste", onPaste);
-    };
+    return () => { cancelled = true; window.removeEventListener("focus", onFocus); window.removeEventListener("paste", onPaste); };
   }, [clipDismissed]);
-
-  const movePin = useCallback((i: number, x: number, y: number) => {
-    setPositions(prev => {
-      if (!prev) return prev;
-      const next = [...prev];
-      next[i] = { x, y };
-      return next;
-    });
-  }, []);
 
   // Suggestions fetch
   const fetchSuggestions = useCallback(async (q: string) => {
-    if (q.trim().length < 2 || isUrl(q.trim())) { setSuggestions([]); setSugOpen(false); return; }
+    const t = q.trim();
+    if (t.length < 2 || looksLikeUrl(t)) { setSuggestions([]); setSugOpen(false); return; }
     try {
-      const res = await fetch(`/api/suggestions?q=${encodeURIComponent(q.trim())}`);
+      const res = await fetch(`/api/suggestions?q=${encodeURIComponent(t)}`);
       const data: Suggestion[] = await res.json();
-      setSuggestions(data);
-      setSugOpen(data.length > 0);
-      setActiveIndex(-1);
+      setSuggestions(data); setSugOpen(data.length > 0); setActiveIndex(-1);
     } catch { setSuggestions([]); }
   }, []);
 
   // Close suggestions on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node))
         setSugOpen(false);
-      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -322,18 +294,19 @@ export function BoardHome({ resources, totalCount }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!trimmed) return;
+    const t = value.trim();
+    if (!t) return;
     if (activeIndex >= 0 && suggestions[activeIndex]) {
       router.push(`/resources/${suggestions[activeIndex].id}`);
       setSugOpen(false);
       return;
     }
-    if (urlMode) { setAddUrl(trimmed); setValue(""); }
-    else router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    if (looksLikeUrl(t)) { setAddUrl(toFullUrl(t)); setValue(""); }
+    else router.push(`/search?q=${encodeURIComponent(t)}`);
     setSugOpen(false);
   };
 
-  // Tap empty board → spawn sticky note
+  // Spawn sticky note on empty board click
   const spawnNote = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as Element;
     if (target.closest(".stage-center, .around-card, .tertiary-link, a, button, input, textarea")) return;
@@ -347,7 +320,6 @@ export function BoardHome({ resources, totalCount }: Props) {
     }]);
   };
 
-  const around = resources.slice(0, POS_SPECS.length);
   const short = (u: string) =>
     u.replace(/^https?:\/\//i, "").replace(/^www\./i, "").slice(0, 46);
 
@@ -355,79 +327,54 @@ export function BoardHome({ resources, totalCount }: Props) {
     <div className="home-canvas fade-in">
       <div className="board-stage" ref={stageRef} onClick={spawnNote}>
 
-        {/* Scattered draggable pins + tap-to-create sticky notes */}
+        {/* Scattered draggable pins */}
         <div className="scatter-around">
-          {positions && around.map((r, i) => (
-            <DraggablePin
-              key={r.id}
-              pos={positions[i]}
-              onMove={(x, y) => movePin(i, x, y)}
-              onOpen={() => router.push(`/resources/${r.id}`)}
-            >
-              <MemoCard resource={r} noLink />
-            </DraggablePin>
-          ))}
+          {pinsReady && pinnedResources.map(r => {
+            const pos = positions.get(r.id);
+            if (!pos) return null;
+            return (
+              <DraggablePin key={r.id} pos={pos}
+                onMove={(x, y) => movePin(r.id, x, y)}
+                onOpen={() => router.push(`/resources/${r.id}`)}>
+                <MemoCard resource={r} noLink
+                  pinned={true}
+                  onTogglePin={() => removePin(r.id)} />
+              </DraggablePin>
+            );
+          })}
 
           {notes.map(n => (
-            <StickyNote
-              key={n.id}
-              note={n}
+            <StickyNote key={n.id} note={n}
               onClose={() => setNotes(ns => ns.filter(x => x.id !== n.id))}
-              onSubmit={url => {
-                setNotes(ns => ns.filter(x => x.id !== n.id));
-                setAddUrl(url);
-              }}
-              onMove={(x, y) =>
-                setNotes(ns => ns.map(m => m.id === n.id ? { ...m, x, y } : m))
-              }
-            />
+              onSubmit={url => { setNotes(ns => ns.filter(x => x.id !== n.id)); setAddUrl(url); }}
+              onMove={(x, y) => setNotes(ns => ns.map(m => m.id === n.id ? { ...m, x, y } : m))} />
           ))}
         </div>
 
-        {/* Centered stage content */}
+        {/* Center stage */}
         <div className="stage-center">
           {clip ? (
-            /* Clipboard URL detected */
             <div className="clipnote alert">
-              <p className="eyebrow" style={{ marginBottom: 12 }}>
-                📋 spotted in your clipboard
-              </p>
-              <h1 style={{
-                fontSize: "clamp(1.5rem, 3.4vw, 2rem)",
-                fontWeight: 700, letterSpacing: "-0.02em",
-                lineHeight: 1.12, margin: "0 0 14px",
-              }}>
+              <p className="eyebrow" style={{ marginBottom: 12 }}>📋 spotted in your clipboard</p>
+              <h1 style={{ fontSize: "clamp(1.5rem, 3.4vw, 2rem)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.12, margin: "0 0 14px" }}>
                 Ooh, a link! Want to stash it?
               </h1>
               <div className="clip-url" style={{ marginBottom: 18 }}>{short(clip)}</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-lg"
-                  onClick={() => { setAddUrl(clip); setClip(null); }}
-                >
+                <button type="button" className="btn btn-primary btn-lg" onClick={() => { setAddUrl(toFullUrl(clip)); setClip(null); }}>
                   Pin it up 📌
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-lg"
-                  onClick={() => { setClip(null); setClipDismissed(true); }}
-                >
+                <button type="button" className="btn btn-ghost btn-lg" onClick={() => { setClip(null); setClipDismissed(true); }}>
                   nah, I&rsquo;m just snooping 👀
                 </button>
               </div>
             </div>
           ) : (
-            /* Normal hero */
             <>
               <p className="eyebrow" style={{ marginBottom: 12 }}>
                 the design stash · {totalCount} pinned
               </p>
-              <h1 style={{
-                fontSize: "clamp(1.6rem, 3.6vw, 2.15rem)",
-                fontWeight: 700, letterSpacing: "-0.022em",
-                lineHeight: 1.1, margin: "0 0 8px",
-              }}>
+              <h1 style={{ fontSize: "clamp(1.6rem, 3.6vw, 2.15rem)", fontWeight: 700, letterSpacing: "-0.022em", lineHeight: 1.1, margin: "0 0 8px" }}>
                 Found something good?
               </h1>
               <p style={{ fontSize: "0.98em", margin: "0 0 20px", color: "var(--muted-foreground)" }}>
@@ -437,9 +384,7 @@ export function BoardHome({ resources, totalCount }: Props) {
               <div ref={searchWrapRef} className="suggestions-wrap">
                 <form onSubmit={handleSubmit} style={{ display: "flex", gap: 10 }}>
                   <div className="field field-lg" style={{ flex: 1 }}>
-                    <span className="ico">
-                      {urlMode ? <LinkIcon /> : <SearchIcon />}
-                    </span>
+                    <span className="ico">{urlMode ? <LinkIcon /> : <SearchIcon />}</span>
                     <input
                       value={value}
                       onChange={e => {
@@ -455,16 +400,12 @@ export function BoardHome({ resources, totalCount }: Props) {
                         else if (e.key === "Escape") { setSugOpen(false); setActiveIndex(-1); }
                       }}
                       placeholder="paste a link or search…"
-                      autoComplete="off"
-                      spellCheck={false}
+                      autoComplete="off" spellCheck={false}
                     />
                   </div>
-                  <button
-                    type="submit"
-                    disabled={!trimmed}
+                  <button type="submit" disabled={!value.trim()}
                     className={`btn btn-lg ${urlMode ? "btn-primary" : "btn-outline"}`}
-                    style={{ height: 52, flexShrink: 0, opacity: trimmed ? 1 : 0.5 }}
-                  >
+                    style={{ height: 52, flexShrink: 0, opacity: value.trim() ? 1 : 0.5 }}>
                     {urlMode ? "Stash 📌" : "Search"}
                   </button>
                 </form>
@@ -476,18 +417,11 @@ export function BoardHome({ resources, totalCount }: Props) {
                       const mark = getMark(s as any);
                       const kind = getKind(s as any);
                       return (
-                        <div
-                          key={s.id}
-                          className="suggestion-item"
-                          data-active={i === activeIndex ? "1" : "0"}
-                          role="option"
+                        <div key={s.id} className="suggestion-item"
+                          data-active={i === activeIndex ? "1" : "0"} role="option"
                           onMouseDown={() => { router.push(`/resources/${s.id}`); setSugOpen(false); }}
-                          onMouseEnter={() => setActiveIndex(i)}
-                        >
-                          <span className="suggestion-favicon" style={{
-                            width: 26, height: 26, fontSize: 11, borderRadius: 6,
-                            background: `linear-gradient(150deg, ${tint}, color-mix(in oklab, ${tint} 72%, #000))`,
-                          }}>{mark}</span>
+                          onMouseEnter={() => setActiveIndex(i)}>
+                          <span className="suggestion-favicon" style={{ width: 26, height: 26, fontSize: 11, borderRadius: 6, background: `linear-gradient(150deg, ${tint}, color-mix(in oklab, ${tint} 72%, #000))` }}>{mark}</span>
                           <div className="suggestion-body">
                             <div className="suggestion-title">{s.title ?? s.domain}</div>
                             {s.domain && <div className="suggestion-meta">{s.domain}</div>}
@@ -506,9 +440,7 @@ export function BoardHome({ resources, totalCount }: Props) {
 
               <div className="stage-cats">
                 {CATEGORIES.map(c => (
-                  <Link key={c} href={`/search?category=${encodeURIComponent(c)}`} className="chip">
-                    {c}
-                  </Link>
+                  <Link key={c} href={`/search?category=${encodeURIComponent(c)}`} className="chip">{c}</Link>
                 ))}
               </div>
             </>
@@ -516,19 +448,16 @@ export function BoardHome({ resources, totalCount }: Props) {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="stage-foot">
         <Link href="/search" className="tertiary-link">
           see the whole stash <ArrowRightIcon />
         </Link>
         <span className="stage-hint">
-          drag the pins around · tap anywhere to add a pin
+          drag the pins around · tap anywhere to add a sticky note
         </span>
       </div>
 
-      {addUrl && (
-        <AddResourceModal onClose={() => setAddUrl(null)} initialUrl={addUrl} />
-      )}
+      {addUrl && <AddResourceModal onClose={() => setAddUrl(null)} initialUrl={addUrl} />}
     </div>
   );
 }

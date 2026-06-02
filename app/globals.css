@@ -250,6 +250,20 @@ body::before {
   background: color-mix(in oklab, var(--ink) 22%, transparent); color: #2b2620;
 }
 
+/* ── Memo card pin button ── */
+.memo-pin-btn {
+  position: absolute; top: 8px; right: 8px; z-index: 5;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: color-mix(in oklab, var(--ink, #888) 18%, #f4ecdb);
+  border: 1.5px solid color-mix(in oklab, var(--ink, #888) 35%, transparent);
+  color: #2b2620; font-size: 14px; font-weight: 700; line-height: 1;
+  cursor: pointer; display: grid; place-items: center;
+  opacity: 0; transition: opacity 0.15s, transform 0.15s;
+  transform: scale(0.85);
+}
+.memo:hover .memo-pin-btn { opacity: 1; transform: scale(1); }
+.memo-pin-btn:hover { background: color-mix(in oklab, var(--ink, #888) 30%, #f4ecdb); }
+
 /* ── Scatter layout ── */
 .scatter {
   display: flex; flex-wrap: wrap; gap: 30px 28px;
