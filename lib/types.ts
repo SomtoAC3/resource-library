@@ -20,10 +20,14 @@ export interface Resource {
 }
 
 export const CATEGORIES = [
-  "AI Tools",
-  "Inspiration",
   "Components",
-  "Interactions",
+  "Inspiration",
+  "Animation",
+  "Tools",
+  "Color",
+  "Typography",
+  "Icons",
+  "Assets",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
