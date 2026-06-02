@@ -11,8 +11,17 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MemoCard } from "./MemoCard";
 import { AddResourceModal } from "./AddResourceModal";
+import { getTint, getMark, getKind } from "@/lib/resource-utils";
 import { CATEGORIES } from "@/lib/types";
 import type { Resource } from "@/lib/types";
+
+interface Suggestion {
+  id: string;
+  title: string | null;
+  domain: string | null;
+  categories: string[];
+  source: string | null;
+}
 
 // ── helpers ────────────────────────────────────────────────────────────
 
@@ -219,6 +228,12 @@ export function BoardHome({ resources, totalCount }: Props) {
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [clip, setClip] = useState<string | null>(null);
   const [clipDismissed, setClipDismissed] = useState(false);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [sugOpen, setSugOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  const searchWrapRef = useRef<HTMLDivElement>(null);
+  const sugDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const trimmed = value.trim();
   const urlMode = isUrl(trimmed);
@@ -282,11 +297,40 @@ export function BoardHome({ resources, totalCount }: Props) {
     });
   }, []);
 
+  // Suggestions fetch
+  const fetchSuggestions = useCallback(async (q: string) => {
+    if (q.trim().length < 2 || isUrl(q.trim())) { setSuggestions([]); setSugOpen(false); return; }
+    try {
+      const res = await fetch(`/api/suggestions?q=${encodeURIComponent(q.trim())}`);
+      const data: Suggestion[] = await res.json();
+      setSuggestions(data);
+      setSugOpen(data.length > 0);
+      setActiveIndex(-1);
+    } catch { setSuggestions([]); }
+  }, []);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) {
+        setSugOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!trimmed) return;
+    if (activeIndex >= 0 && suggestions[activeIndex]) {
+      router.push(`/resources/${suggestions[activeIndex].id}`);
+      setSugOpen(false);
+      return;
+    }
     if (urlMode) { setAddUrl(trimmed); setValue(""); }
     else router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    setSugOpen(false);
   };
 
   // Tap empty board → spawn sticky note
@@ -390,28 +434,71 @@ export function BoardHome({ resources, totalCount }: Props) {
                 Pin a link to stash it — or dig through the board around you.
               </p>
 
-              <form onSubmit={handleSubmit} style={{ display: "flex", gap: 10 }}>
-                <div className="field field-lg" style={{ flex: 1 }}>
-                  <span className="ico">
-                    {urlMode ? <LinkIcon /> : <SearchIcon />}
-                  </span>
-                  <input
-                    value={value}
-                    onChange={e => setValue(e.target.value)}
-                    placeholder="paste a link or search…"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={!trimmed}
-                  className={`btn btn-lg ${urlMode ? "btn-primary" : "btn-outline"}`}
-                  style={{ height: 52, flexShrink: 0, opacity: trimmed ? 1 : 0.5 }}
-                >
-                  {urlMode ? "Stash 📌" : "Search"}
-                </button>
-              </form>
+              <div ref={searchWrapRef} className="suggestions-wrap">
+                <form onSubmit={handleSubmit} style={{ display: "flex", gap: 10 }}>
+                  <div className="field field-lg" style={{ flex: 1 }}>
+                    <span className="ico">
+                      {urlMode ? <LinkIcon /> : <SearchIcon />}
+                    </span>
+                    <input
+                      value={value}
+                      onChange={e => {
+                        const v = e.target.value;
+                        setValue(v);
+                        if (sugDebounceRef.current) clearTimeout(sugDebounceRef.current);
+                        sugDebounceRef.current = setTimeout(() => fetchSuggestions(v), 200);
+                      }}
+                      onKeyDown={e => {
+                        if (!sugOpen || !suggestions.length) return;
+                        if (e.key === "ArrowDown") { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, suggestions.length - 1)); }
+                        else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, -1)); }
+                        else if (e.key === "Escape") { setSugOpen(false); setActiveIndex(-1); }
+                      }}
+                      placeholder="paste a link or search…"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!trimmed}
+                    className={`btn btn-lg ${urlMode ? "btn-primary" : "btn-outline"}`}
+                    style={{ height: 52, flexShrink: 0, opacity: trimmed ? 1 : 0.5 }}
+                  >
+                    {urlMode ? "Stash 📌" : "Search"}
+                  </button>
+                </form>
+
+                {sugOpen && suggestions.length > 0 && (
+                  <div className="suggestions" role="listbox">
+                    {suggestions.map((s, i) => {
+                      const tint = getTint(s as any);
+                      const mark = getMark(s as any);
+                      const kind = getKind(s as any);
+                      return (
+                        <div
+                          key={s.id}
+                          className="suggestion-item"
+                          data-active={i === activeIndex ? "1" : "0"}
+                          role="option"
+                          onMouseDown={() => { router.push(`/resources/${s.id}`); setSugOpen(false); }}
+                          onMouseEnter={() => setActiveIndex(i)}
+                        >
+                          <span className="suggestion-favicon" style={{
+                            width: 26, height: 26, fontSize: 11, borderRadius: 6,
+                            background: `linear-gradient(150deg, ${tint}, color-mix(in oklab, ${tint} 72%, #000))`,
+                          }}>{mark}</span>
+                          <div className="suggestion-body">
+                            <div className="suggestion-title">{s.title ?? s.domain}</div>
+                            {s.domain && <div className="suggestion-meta">{s.domain}</div>}
+                          </div>
+                          {kind && <span className="suggestion-kind">{kind}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
               <p style={{ fontSize: "0.76em", marginTop: 12, color: "var(--ds-fg-subtle)" }}>
                 psst — copy a link and we&rsquo;ll spot it for you.
