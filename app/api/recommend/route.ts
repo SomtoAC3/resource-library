@@ -6,7 +6,7 @@ import { extractKeywords } from "@/lib/url-utils";
 export const maxDuration = 60;
 
 interface RankedItem {
-  id: string;
+  idx: number;   // index into candidates array — avoids UUID hallucination
   explanation: string;
   visitFirst: boolean;
 }
@@ -31,11 +31,13 @@ Your job:
 Return valid JSON only — no markdown, no explanation outside JSON:
 {
   "recommendations": [
-    { "id": "<resource_id>", "explanation": "...", "visitFirst": true|false }
+    { "idx": 0, "explanation": "...", "visitFirst": true|false }
   ],
   "suggestedCategories": ["Category"],
   "note": "One sentence framing."
 }
+
+IMPORTANT: "idx" must be the exact integer index from the candidate list (0-based). Do NOT use any other identifier.
 
 Rules:
 - Only include resources from the provided list
@@ -86,10 +88,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Step 2: Send to OpenAI for ranking + explanations
+  // Use array index (not UUID) so the model can't hallucinate IDs
   const resourceContext = candidates
-    .map((r: any) =>
+    .map((r: any, idx: number) =>
       JSON.stringify({
-        id: r.id,
+        idx,
         title: r.title,
         domain: r.domain,
         categories: r.categories,
@@ -124,13 +127,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Step 3: Join AI ranking with full resource data
-  const resourceMap = Object.fromEntries(candidates.map((r: any) => [r.id, r]));
-
+  // Step 3: Map idx back to full resource data
   const recommendations = (aiResponse.recommendations ?? [])
-    .filter((item: RankedItem) => resourceMap[item.id])
+    .filter((item: RankedItem) => typeof item.idx === "number" && candidates[item.idx])
     .map((item: RankedItem) => ({
-      resource: resourceMap[item.id],
+      resource: candidates[item.idx],
       explanation: item.explanation,
       visitFirst: item.visitFirst ?? false,
     }));
