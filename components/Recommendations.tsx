@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getTint, getMark, getKind } from "@/lib/resource-utils";
+import { getTint, getMark, getKind, hashStr } from "@/lib/resource-utils";
 import type { Resource } from "@/lib/types";
 
 interface Recommendation {
@@ -39,12 +39,14 @@ function RecoCard({ rec }: { rec: Recommendation }) {
   const mark = getMark(resource);
   const kind = getKind(resource);
   const paper = `color-mix(in oklab, ${tint} 19%, #f4ecdb)`;
+  const h = hashStr(resource.id);
+  const rot = ((h % 9) - 4) * 1.05;
 
   return (
     <Link
       href={`/resources/${resource.id}`}
       className="memo"
-      style={{ "--rot": "0deg", "--paper": paper, "--ink": tint } as React.CSSProperties}
+      style={{ "--rot": `${rot}deg`, "--paper": paper, "--ink": tint } as React.CSSProperties}
     >
       {visitFirst && (
         <span style={{
