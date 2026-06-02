@@ -53,47 +53,50 @@ function HandUnderline() {
 interface Props {
   resource: Resource;
   style?: React.CSSProperties;
+  /** Render as a div instead of a Link — use inside DraggablePin */
+  noLink?: boolean;
 }
 
-export function MemoCard({ resource, style }: Props) {
+export function MemoCard({ resource, style, noLink = false }: Props) {
   const h = hashStr(resource.id);
   const rot = ((h % 9) - 4) * 1.05;
   const tint = getTint(resource);
   const paper = `color-mix(in oklab, ${tint} 19%, #f4ecdb)`;
   const kind = getKind(resource);
 
-  // Eyebrow: CATEGORY · KIND
   const eyebrowParts = [resource.categories[0], kind].filter(Boolean);
 
-  return (
-    <Link
-      href={`/resources/${resource.id}`}
-      className="memo"
-      style={{
-        "--rot": `${rot}deg`,
-        "--paper": paper,
-        "--ink": tint,
-        ...style,
-      } as React.CSSProperties}
-    >
-      <div className="memo-eye">
-        {eyebrowParts.join(" · ") || "Resource"}
-      </div>
+  const memoStyle = {
+    "--rot": `${rot}deg`,
+    "--paper": paper,
+    "--ink": tint,
+    ...style,
+  } as React.CSSProperties;
 
-      <h3 className="memo-title">
-        {resource.title ?? resource.domain}
-      </h3>
-
+  const inner = (
+    <>
+      <div className="memo-eye">{eyebrowParts.join(" · ") || "Resource"}</div>
+      <h3 className="memo-title">{resource.title ?? resource.domain}</h3>
       <HandUnderline />
-
-      <p className="memo-sum">
-        {resource.ai_summary ?? resource.description ?? ""}
-      </p>
-
+      <p className="memo-sum">{resource.ai_summary ?? resource.description ?? ""}</p>
       <div className="memo-foot">
         <span className="memo-dom">{resource.domain}</span>
         {kind && <span className="memo-kind">{kind}</span>}
       </div>
+    </>
+  );
+
+  if (noLink) {
+    return (
+      <div className="memo" style={memoStyle}>
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={`/resources/${resource.id}`} className="memo" style={memoStyle}>
+      {inner}
     </Link>
   );
 }
