@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RetryButton } from "@/components/RetryButton";
 import { MemoCard } from "@/components/MemoCard";
 import { ReferenceNotes } from "@/components/ReferenceNotes";
+import { ProcessingPoller } from "@/components/ProcessingPoller";
 import { getTint, getMark } from "@/lib/resource-utils";
 import type { Resource } from "@/lib/types";
 
@@ -206,23 +207,24 @@ export default async function ResourcePage({ params }: Props) {
         )}
 
         {isProcessing && (
-          <p style={{ fontSize: "0.82em", color: "var(--ds-fg-subtle)", marginTop: 8 }}>
-            Processing — this page will update shortly.
-          </p>
+          <>
+            <p style={{ fontSize: "0.82em", color: "var(--ds-fg-subtle)", marginTop: 8 }}>
+              Processing — this page will update shortly.
+            </p>
+            <ProcessingPoller resourceId={resource.id} />
+          </>
         )}
       </div>
 
       {/* Reference notes */}
       {!isProcessing && (
-        <div style={{ maxWidth: 660 }}>
-          <ReferenceNotes
-            resourceId={resource.id}
-            initialType={resource.type}
-            whyILikeThis={resource.why_i_like_this}
-            inspirationNotes={resource.inspiration_notes}
-            tint={tint}
-          />
-        </div>
+        <ReferenceNotes
+          resourceId={resource.id}
+          initialType={resource.type}
+          whyILikeThis={resource.why_i_like_this}
+          inspirationNotes={resource.inspiration_notes}
+          tint={tint}
+        />
       )}
 
       {/* Related */}
