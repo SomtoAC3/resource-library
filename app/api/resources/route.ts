@@ -32,12 +32,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "URL must use http or https" }, { status: 400 });
   }
 
+  // Normalize: strip trailing slash so https://x.com/ and https://x.com deduplicate
+  const normalizedUrl = parsed.toString().replace(/\/$/, "") || parsed.toString();
+
   const supabase = await createClient();
+
+  // Dedup: return existing resource if this URL was already stashed
+  const { data: existing } = await supabase
+    .from("resources")
+    .select("*")
+    .eq("url", normalizedUrl)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json(existing, { status: 200 });
+  }
 
   const { data: resource, error } = await supabase
     .from("resources")
     .insert({
-      url: parsed.toString(),
+      url: normalizedUrl,
       domain: parsed.hostname.replace(/^www\./, ""),
       status: "processing",
       source: body.source ?? "web",
