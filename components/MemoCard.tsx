@@ -10,6 +10,9 @@ const TINTS = [
   "#0891b2", "#6246ea", "#6c63ff", "#1a73e8", "#6d28d9",
 ];
 
+// These values in `source` are legacy routing values, not kinds
+const LEGACY_SOURCES = new Set(["web", "api", "extension"]);
+
 export function hashStr(s: string): number {
   let h = 0;
   for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0;
@@ -24,9 +27,13 @@ export function getMark(resource: Resource): string {
   return (resource.title ?? resource.domain ?? "?").charAt(0).toUpperCase();
 }
 
-interface Props {
-  resource: Resource;
-  style?: React.CSSProperties;
+function getKind(resource: Resource): string | null {
+  // source field stores kind for resources processed after the AI update
+  if (resource.source && !LEGACY_SOURCES.has(resource.source)) {
+    return resource.source;
+  }
+  // Fallback: second category
+  return resource.categories[1] ?? null;
 }
 
 function HandUnderline() {
@@ -43,11 +50,20 @@ function HandUnderline() {
   );
 }
 
+interface Props {
+  resource: Resource;
+  style?: React.CSSProperties;
+}
+
 export function MemoCard({ resource, style }: Props) {
   const h = hashStr(resource.id);
   const rot = ((h % 9) - 4) * 1.05;
   const tint = getTint(resource);
   const paper = `color-mix(in oklab, ${tint} 19%, #f4ecdb)`;
+  const kind = getKind(resource);
+
+  // Eyebrow: CATEGORY · KIND
+  const eyebrowParts = [resource.categories[0], kind].filter(Boolean);
 
   return (
     <Link
@@ -61,22 +77,22 @@ export function MemoCard({ resource, style }: Props) {
       } as React.CSSProperties}
     >
       <div className="memo-eye">
-        {resource.categories[0] ?? "Resource"} · {resource.domain ?? ""}
+        {eyebrowParts.join(" · ") || "Resource"}
       </div>
+
       <h3 className="memo-title">
         {resource.title ?? resource.domain}
       </h3>
+
       <HandUnderline />
+
       <p className="memo-sum">
         {resource.ai_summary ?? resource.description ?? ""}
       </p>
+
       <div className="memo-foot">
         <span className="memo-dom">{resource.domain}</span>
-        {(resource.categories[1] ?? resource.categories[0]) && (
-          <span className="memo-kind">
-            {resource.categories[1] ?? resource.categories[0]}
-          </span>
-        )}
+        {kind && <span className="memo-kind">{kind}</span>}
       </div>
     </Link>
   );

@@ -38,6 +38,9 @@ export async function processResource(id: string, url: string): Promise<void> {
   let tags: string[] = [];
   let ai_summary: string | null = null;
 
+  let aiName: string | null = null;
+  let aiKind: string | null = null;
+
   try {
     const ai = await categorizeResource({
       url,
@@ -45,6 +48,8 @@ export async function processResource(id: string, url: string): Promise<void> {
       description: metadata?.description ?? null,
       domain: metadata?.domain ?? new URL(url).hostname.replace(/^www\./, ""),
     });
+    aiName = ai.name;
+    aiKind = ai.kind;
     categories = ai.categories;
     tags = ai.tags;
     ai_summary = ai.ai_summary;
@@ -58,12 +63,15 @@ export async function processResource(id: string, url: string): Promise<void> {
   const { error: updateError } = await supabase
     .from("resources")
     .update({
-      title: metadata?.title ?? null,
+      // Prefer AI-generated clean name; fall back to og:title / <title>
+      title: aiName ?? metadata?.title ?? null,
       description: metadata?.description ?? null,
       og_image_url: metadata?.og_image_url ?? null,
       favicon_url: metadata?.favicon_url ?? null,
       domain: metadata?.domain ?? null,
       screenshot_url: screenshot ?? metadata?.og_image_url ?? null,
+      // Repurpose source field to store resource kind (Library, Gallery, Tool …)
+      source: aiKind ?? "web",
       categories,
       tags,
       ai_summary,
