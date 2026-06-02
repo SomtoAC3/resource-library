@@ -213,7 +213,6 @@ body::before {
 .memo:hover {
   transform: rotate(0deg) translateY(-12px) scale(1.14);
   border-color: color-mix(in oklab, var(--ink, #888) 42%, transparent);
-  box-shadow: var(--ds-shadow-lg);
   z-index: 6;
 }
 .memo-eye {
