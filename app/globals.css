@@ -410,6 +410,30 @@ body::before {
   .topbar-search { display: none; }
 }
 
+/* ── Search page sticky header ── */
+.search-sticky {
+  position: sticky; top: 0; z-index: 40;
+  background: color-mix(in oklab, var(--background) 88%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+}
+
+/* ── Scroll-to-top button ── */
+.scroll-top-btn {
+  position: fixed; bottom: 28px; right: 28px; z-index: 50;
+  width: 40px; height: 40px; border-radius: 99px;
+  background: var(--foreground); color: var(--background);
+  border: 0; cursor: pointer; display: grid; place-items: center;
+  box-shadow: var(--ds-shadow-md);
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+.scroll-top-btn.visible { opacity: 1; transform: none; pointer-events: auto; }
+.scroll-top-btn:hover { opacity: 0.8; }
+
 /* ── Search suggestions dropdown ── */
 .suggestions-wrap { position: relative; width: 100%; }
 .suggestions {

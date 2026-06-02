@@ -4,6 +4,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { ResourceGrid } from "@/components/ResourceGrid";
 import { ViewToggle } from "@/components/ViewToggle";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import type { Resource } from "@/lib/types";
 
 interface SearchPageProps {
@@ -50,50 +51,58 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const results = await searchResources(q, category);
 
   return (
-    <div className="container fade-in" style={{ paddingTop: 28, paddingBottom: 96 }}>
-      {/* Search bar */}
-      <div style={{ maxWidth: 640, marginBottom: 22 }}>
-        <Suspense>
-          <SearchBar />
-        </Suspense>
-      </div>
+    <div style={{ paddingBottom: 120 }}>
+      {/* Sticky search + filters bar */}
+      <div className="search-sticky">
+        <div className="container">
+          {/* Centered search bar */}
+          <div style={{ maxWidth: 640, margin: "0 auto 14px" }}>
+            <Suspense>
+              <SearchBar />
+            </Suspense>
+          </div>
 
-      {/* Filters row */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 16,
-        marginBottom: 28,
-        flexWrap: "wrap",
-      }}>
-        <Suspense>
-          <CategoryFilter />
-        </Suspense>
+          {/* Filters + count + view toggle */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            flexWrap: "wrap",
+          }}>
+            <Suspense>
+              <CategoryFilter />
+            </Suspense>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
-          <span style={{ fontSize: "0.84em", color: "var(--ds-fg-subtle)" }}>
-            <strong style={{ color: "var(--foreground)", fontWeight: 600 }}>
-              {results.length}
-            </strong>{" "}
-            result{results.length !== 1 ? "s" : ""}
-            {category && (
-              <>
-                {" "}in{" "}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+              <span style={{ fontSize: "0.84em", color: "var(--ds-fg-subtle)" }}>
                 <strong style={{ color: "var(--foreground)", fontWeight: 600 }}>
-                  {category}
-                </strong>
-              </>
-            )}
-          </span>
-          <Suspense>
-            <ViewToggle view={view} />
-          </Suspense>
+                  {results.length}
+                </strong>{" "}
+                result{results.length !== 1 ? "s" : ""}
+                {category && (
+                  <>
+                    {" "}in{" "}
+                    <strong style={{ color: "var(--foreground)", fontWeight: 600 }}>
+                      {category}
+                    </strong>
+                  </>
+                )}
+              </span>
+              <Suspense>
+                <ViewToggle view={view} />
+              </Suspense>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Results */}
-      <ResourceGrid resources={results} view={view} />
+      {/* Results grid — scrolls under the sticky bar */}
+      <div className="container fade-in" style={{ paddingTop: 28 }}>
+        <ResourceGrid resources={results} view={view} />
+      </div>
+
+      <ScrollToTop />
     </div>
   );
 }
