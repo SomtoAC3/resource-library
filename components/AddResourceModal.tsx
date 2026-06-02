@@ -214,7 +214,7 @@ export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
                   type="submit"
                   className="btn btn-primary"
                   disabled={!urlMode}
-                  style={{ opacity: urlMode ? 1 : 0.4 }}
+                  style={{ opacity: urlMode ? 1 : 0.4, height: 40 }}
                 >
                   Stash it
                 </button>
