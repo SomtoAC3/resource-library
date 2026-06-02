@@ -1,3 +1,39 @@
+export type InputMode = "submit" | "search" | "recommend";
+
+/**
+ * Deterministic intent classifier — no AI needed.
+ * submit   → looks like a URL
+ * search   → 1–4 words
+ * recommend → 5+ words (sentence / description / question)
+ */
+export function detectMode(input: string): InputMode {
+  const t = input.trim();
+  if (!t) return "search";
+  if (looksLikeUrl(t)) return "submit";
+  const words = t.split(/\s+/).filter(Boolean);
+  if (words.length >= 5) return "recommend";
+  return "search";
+}
+
+/** Strip common stop-words to extract FTS keywords from a sentence */
+export function extractKeywords(sentence: string): string {
+  const stop = new Set([
+    "i","me","my","we","you","a","an","the","is","are","am","be","was","were",
+    "to","of","in","for","on","with","at","by","from","and","or","but","so",
+    "need","want","looking","find","show","give","suggest","help","build",
+    "building","built","create","creating","made","make","similar","like",
+    "something","anything","some","any","that","this","it","its","just","also",
+    "really","very","more","can","do","does","how","what","which","where","who",
+    "im","ive","id","ill","im","would","could","should","have","has","had",
+  ]);
+  return sentence
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !stop.has(w))
+    .join(" ");
+}
+
 /** Returns true for full URLs and bare domain-like strings (magnific.com, www.x.io/path) */
 export function looksLikeUrl(value: string): boolean {
   const t = value.trim();

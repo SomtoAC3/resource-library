@@ -13,7 +13,8 @@ import { MemoCard } from "./MemoCard";
 import { AddResourceModal } from "./AddResourceModal";
 import { getTint, getMark, getKind } from "@/lib/resource-utils";
 import { useBoard } from "@/lib/use-board";
-import { looksLikeUrl, toFullUrl } from "@/lib/url-utils";
+import { looksLikeUrl, toFullUrl, detectMode } from "@/lib/url-utils";
+import { Recommendations } from "./Recommendations";
 import { CATEGORIES } from "@/lib/types";
 import type { Resource } from "@/lib/types";
 
@@ -204,7 +205,9 @@ export function BoardHome({ resources, totalCount }: Props) {
   const [sugOpen, setSugOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  const urlMode = looksLikeUrl(value.trim());
+  const mode = detectMode(value);
+  const urlMode = mode === "submit";
+  const [recoQuery, setRecoQuery] = useState<string | null>(null);
 
   // Board state: exclusion-based — show latest unless hidden
   const { ready: boardReady, hide, show, isHidden, getPosition, savePosition } = useBoard();
@@ -288,14 +291,15 @@ export function BoardHome({ resources, totalCount }: Props) {
     e.preventDefault();
     const t = value.trim();
     if (!t) return;
+    setSugOpen(false);
     if (activeIndex >= 0 && suggestions[activeIndex]) {
       router.push(`/resources/${suggestions[activeIndex].id}`);
-      setSugOpen(false);
       return;
     }
-    if (looksLikeUrl(t)) { setAddUrl(toFullUrl(t)); setValue(""); }
+    const m = detectMode(t);
+    if (m === "submit") { setAddUrl(toFullUrl(t)); setValue(""); }
+    else if (m === "recommend") { setRecoQuery(t); setValue(""); }
     else router.push(`/search?q=${encodeURIComponent(t)}`);
-    setSugOpen(false);
   };
 
   // Spawn sticky note on empty board click
@@ -391,14 +395,14 @@ export function BoardHome({ resources, totalCount }: Props) {
                         else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, -1)); }
                         else if (e.key === "Escape") { setSugOpen(false); setActiveIndex(-1); }
                       }}
-                      placeholder="paste a link or search…"
+                      placeholder="search, paste a link, or describe what you're building…"
                       autoComplete="off" spellCheck={false}
                     />
                   </div>
                   <button type="submit" disabled={!value.trim()}
-                    className={`btn btn-lg ${urlMode ? "btn-primary" : "btn-outline"}`}
+                    className={`btn btn-lg ${mode === "search" ? "btn-outline" : "btn-primary"}`}
                     style={{ height: 52, flexShrink: 0, opacity: value.trim() ? 1 : 0.5 }}>
-                    {urlMode ? "Stash 📌" : "Search"}
+                    {mode === "submit" ? "Stash 📌" : mode === "recommend" ? "Ask AI ✨" : "Search"}
                   </button>
                 </form>
 
@@ -427,10 +431,18 @@ export function BoardHome({ resources, totalCount }: Props) {
               </div>
 
               <p style={{ fontSize: "0.76em", marginTop: 12, color: "var(--ds-fg-subtle)" }}>
-                psst — copy a link and we&rsquo;ll spot it for you.
+                Search resources, paste a URL, or describe what you&rsquo;re building.
               </p>
 
-              <div className="stage-cats">
+              {/* AI Recommendations panel */}
+              {recoQuery && (
+                <Recommendations
+                  query={recoQuery}
+                  onClose={() => setRecoQuery(null)}
+                />
+              )}
+
+              <div className="stage-cats" style={{ marginTop: recoQuery ? 24 : 0 }}>
                 {CATEGORIES.map(c => (
                   <Link key={c} href={`/search?category=${encodeURIComponent(c)}`} className="chip">{c}</Link>
                 ))}
