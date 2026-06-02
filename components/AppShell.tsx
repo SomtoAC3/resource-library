@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { HoverEffect } from "./HoverEffect";
 
 interface Props {
@@ -16,14 +15,9 @@ export function AppShell({ children }: Props) {
       {/* Centered brand logo — no nav bar */}
       <div className="brandbar">
         <Link href="/" className="brand-logo" aria-label="stash — home">
-          <Image
-            src="/stash-logo.png"
-            alt="stash"
-            height={56}
-            width={160}
-            style={{ height: 56, width: "auto", display: "block" }}
-            priority
-          />
+          {/* Plain img — no width attr, so browser never stretches it */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/stash-logo.png" alt="stash" style={{ height: 56, width: "auto", display: "block" }} />
         </Link>
       </div>
 
