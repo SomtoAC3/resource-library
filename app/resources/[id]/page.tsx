@@ -51,24 +51,6 @@ function ExternalIcon() {
   );
 }
 
-function HandUnderline() {
-  return (
-    <svg
-      style={{ display: "block", width: "60%", height: 7, margin: "5px 0 0", overflow: "visible" }}
-      viewBox="0 0 120 8"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M2 5.2 C 22 1.5, 42 7.2, 62 4.2 S 100 1.8, 118 4.8"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 export default async function ResourcePage({ params }: Props) {
   const { id } = await params;
@@ -111,57 +93,19 @@ export default async function ResourcePage({ params }: Props) {
         borderRadius: "var(--radius)",
         border: "1px solid var(--border)",
         marginBottom: 30,
-        background: `radial-gradient(120% 120% at 78% 18%, color-mix(in oklab, ${tint} 88%, #fff) 0%, ${tint} 42%, color-mix(in oklab, ${tint} 72%, #000) 100%)`,
+        background: `color-mix(in oklab, ${tint} 18%, #f4ecdb)`,
       }}>
-        {/* Browser chrome bar */}
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: 30,
-          display: "flex", alignItems: "center", gap: 5, padding: "0 12px",
-          background: "oklch(1 0 0 / 0.1)", backdropFilter: "blur(3px)",
-          zIndex: 2,
-        }}>
-          {[0, 1, 2].map((i) => (
-            <span key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "oklch(1 0 0 / 0.45)", flexShrink: 0 }} />
-          ))}
-          {resource.domain && (
-            <span style={{
-              marginLeft: 8,
-              fontFamily: "var(--font-jetbrains-mono, monospace)",
-              fontSize: 11,
-              color: "oklch(1 0 0 / 0.85)",
-              letterSpacing: "0.01em",
-              overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
-            }}>
-              {resource.domain}
-            </span>
-          )}
-        </div>
-
-        {/* Mark */}
-        <div style={{
-          position: "absolute", inset: 0, display: "grid", placeItems: "center",
-          fontWeight: 700, color: "oklch(1 0 0 / 0.92)", lineHeight: 1,
-          fontSize: "clamp(3rem, 10cqh, 6rem)",
-          textShadow: "0 2px 24px oklch(0 0 0 / 0.25)",
-          paddingTop: 30,
-          zIndex: 1,
-        }}>
-          {isProcessing ? "…" : mark}
-        </div>
-
-        {/* Real screenshot overlaid on top if available */}
+        {isProcessing && (
+          <Skeleton className="absolute inset-0 rounded-none" />
+        )}
         {!isProcessing && image && (
           <Image
             src={image}
             alt={resource.title ?? resource.domain ?? ""}
             fill
             className="object-cover object-top"
-            style={{ zIndex: 3 }}
             priority
           />
-        )}
-        {isProcessing && (
-          <Skeleton className="absolute inset-0 rounded-none" style={{ zIndex: 3 }} />
         )}
       </div>
 
@@ -188,14 +132,13 @@ export default async function ResourcePage({ params }: Props) {
           fontWeight: 600,
           letterSpacing: "-0.02em",
           lineHeight: 1.15,
-          margin: "0 0 6px",
+          margin: "0 0 18px",
         }}>
           {isProcessing ? <Skeleton className="h-8 w-3/4 inline-block" /> : (resource.title ?? resource.domain)}
         </h1>
-        <HandUnderline />
 
         {/* Summary */}
-        <div style={{ fontSize: "1.04em", lineHeight: 1.62, marginBottom: 26, marginTop: 18, color: "var(--muted-foreground)" }}>
+        <div style={{ fontSize: "1.04em", lineHeight: 1.62, marginBottom: 26, color: "var(--muted-foreground)" }}>
           {isProcessing ? (
             <>
               <Skeleton className="h-4 w-full mb-2" />
