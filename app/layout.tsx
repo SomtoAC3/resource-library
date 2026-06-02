@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { AppShell } from "@/components/AppShell";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Resource Library",
-  description: "A library of the internet's best resources.",
+  title: "stash",
+  description: "The design stash — a library of the internet's best resources.",
 };
 
 export default function RootLayout({
@@ -26,26 +28,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
-        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[52px] flex items-center justify-between">
-            <Link
-              href="/"
-              className="font-semibold text-sm tracking-tight hover:opacity-70 transition-opacity"
-            >
-              Resource Library
-            </Link>
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              + Add resource
-            </Link>
-          </div>
-        </header>
-        <main className="flex-1">{children}</main>
+      <body className="min-h-full">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

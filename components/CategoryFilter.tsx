@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
-import { cn } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/types";
 
 export function CategoryFilter() {
@@ -20,18 +19,29 @@ export function CategoryFilter() {
     [active, router, searchParams]
   );
 
+  const clearCategory = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("category");
+    router.push(`/search?${params.toString()}`);
+  }, [router, searchParams]);
+
   return (
-    <div className="flex flex-wrap gap-2">
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+      <button
+        type="button"
+        className="chip chip-accent"
+        data-active={!active ? "1" : "0"}
+        onClick={clearCategory}
+      >
+        All
+      </button>
       {CATEGORIES.map((cat) => (
         <button
           key={cat}
+          type="button"
+          className="chip chip-accent"
+          data-active={active === cat ? "1" : "0"}
           onClick={() => toggle(cat)}
-          className={cn(
-            "px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-150",
-            active === cat
-              ? "bg-foreground text-background"
-              : "bg-secondary text-secondary-foreground hover:bg-secondary/70"
-          )}
         >
           {cat}
         </button>

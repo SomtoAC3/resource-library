@@ -3,10 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { ExternalLink, ArrowLeft } from "lucide-react";
 import { RetryButton } from "@/components/RetryButton";
+import { MemoCard, getTint, getMark } from "@/components/MemoCard";
 import type { Resource } from "@/lib/types";
 
 interface Props {
@@ -23,108 +21,193 @@ async function getResource(id: string): Promise<Resource | null> {
   return data ?? null;
 }
 
+async function getRelated(resource: Resource): Promise<Resource[]> {
+  const supabase = await createClient();
+  if (!resource.categories.length) return [];
+  const { data } = await supabase
+    .from("resources")
+    .select("*")
+    .eq("status", "ready")
+    .neq("id", resource.id)
+    .contains("categories", resource.categories.slice(0, 1))
+    .limit(4);
+  return data ?? [];
+}
+
+function ArrowLeftIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5M11 18l-6-6 6-6" />
+    </svg>
+  );
+}
+
+function ExternalIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 5h5v5M19 5l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+    </svg>
+  );
+}
+
+function HandUnderline() {
+  return (
+    <svg
+      style={{ display: "block", width: "60%", height: 7, margin: "5px 0 0", overflow: "visible" }}
+      viewBox="0 0 120 8"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M2 5.2 C 22 1.5, 42 7.2, 62 4.2 S 100 1.8, 118 4.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export default async function ResourcePage({ params }: Props) {
   const { id } = await params;
   const resource = await getResource(id);
 
   if (!resource) notFound();
 
+  const related = await getRelated(resource);
   const isProcessing = resource.status === "processing";
   const image = resource.screenshot_url ?? resource.og_image_url;
+  const tint = getTint(resource);
+  const mark = getMark(resource);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <div className="container fade-in" style={{ maxWidth: 880, paddingTop: 24, paddingBottom: 96 }}>
       {/* Back + actions */}
-      <div className="flex items-center justify-between mb-6">
-        <Link
-          href="/search"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft size={14} strokeWidth={2} />
-          Back
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+        <Link href="/search" className="link-muted" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <ArrowLeftIcon /> Back
         </Link>
-        <div className="flex items-center gap-2">
-          {resource.status === "failed" && (
-            <RetryButton resourceId={resource.id} />
-          )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {resource.status === "failed" && <RetryButton resourceId={resource.id} />}
           <a
             href={resource.url}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(buttonVariants({ size: "sm" }))}
+            className="btn btn-primary"
           >
-            Visit Website
-            <ExternalLink size={13} className="ml-1.5" />
+            Visit website <ExternalIcon />
           </a>
         </div>
       </div>
 
-      {/* Screenshot */}
-      <div className="relative w-full rounded-2xl overflow-hidden bg-muted border border-border/50 mb-8"
-        style={{ aspectRatio: "2 / 1" }}
-      >
-        {isProcessing && <Skeleton className="absolute inset-0 rounded-none" />}
+      {/* Hero thumbnail */}
+      <div style={{
+        position: "relative",
+        width: "100%",
+        aspectRatio: "2.1 / 1",
+        overflow: "hidden",
+        borderRadius: "var(--radius)",
+        border: "1px solid var(--border)",
+        marginBottom: 30,
+        background: `radial-gradient(120% 120% at 78% 18%, color-mix(in oklab, ${tint} 88%, #fff) 0%, ${tint} 42%, color-mix(in oklab, ${tint} 72%, #000) 100%)`,
+      }}>
+        {/* Browser chrome bar */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: 30,
+          display: "flex", alignItems: "center", gap: 5, padding: "0 12px",
+          background: "oklch(1 0 0 / 0.1)", backdropFilter: "blur(3px)",
+          zIndex: 2,
+        }}>
+          {[0, 1, 2].map((i) => (
+            <span key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "oklch(1 0 0 / 0.45)", flexShrink: 0 }} />
+          ))}
+          {resource.domain && (
+            <span style={{
+              marginLeft: 8,
+              fontFamily: "var(--font-jetbrains-mono, monospace)",
+              fontSize: 11,
+              color: "oklch(1 0 0 / 0.85)",
+              letterSpacing: "0.01em",
+              overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+            }}>
+              {resource.domain}
+            </span>
+          )}
+        </div>
+
+        {/* Mark */}
+        <div style={{
+          position: "absolute", inset: 0, display: "grid", placeItems: "center",
+          fontWeight: 700, color: "oklch(1 0 0 / 0.92)", lineHeight: 1,
+          fontSize: "clamp(3rem, 10cqh, 6rem)",
+          textShadow: "0 2px 24px oklch(0 0 0 / 0.25)",
+          paddingTop: 30,
+          zIndex: 1,
+        }}>
+          {isProcessing ? "…" : mark}
+        </div>
+
+        {/* Real screenshot overlaid on top if available */}
         {!isProcessing && image && (
           <Image
             src={image}
             alt={resource.title ?? resource.domain ?? ""}
             fill
             className="object-cover object-top"
+            style={{ zIndex: 3 }}
             priority
           />
         )}
-        {!isProcessing && !image && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
-            No preview available
-          </div>
+        {isProcessing && (
+          <Skeleton className="absolute inset-0 rounded-none" style={{ zIndex: 3 }} />
         )}
       </div>
 
       {/* Content */}
-      <div className="max-w-2xl space-y-5">
-        {/* Domain */}
-        <div className="flex items-center gap-2">
-          {resource.favicon_url && (
-            <Image
-              src={resource.favicon_url}
-              alt=""
-              width={16}
-              height={16}
-              className="rounded-sm shrink-0"
-              unoptimized
-            />
-          )}
-          <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
-            {resource.domain}
+      <div style={{ maxWidth: 660 }}>
+        {/* Domain + kind */}
+        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 16 }}>
+          <span
+            className="favicon"
+            style={{
+              width: 20, height: 20, fontSize: 10,
+              background: `linear-gradient(150deg, ${tint}, color-mix(in oklab, ${tint} 78%, #000))`,
+              borderRadius: 6,
+            }}
+          >
+            {mark}
           </span>
+          <span className="eyebrow" style={{ fontSize: "0.72em" }}>{resource.domain}</span>
         </div>
 
         {/* Title */}
-        <div className="text-[1.75rem] font-semibold leading-[1.2] tracking-[-0.015em]">
+        <h1 style={{
+          fontSize: "clamp(1.6rem, 3.2vw, 2.1rem)",
+          fontWeight: 600,
+          letterSpacing: "-0.02em",
+          lineHeight: 1.15,
+          margin: "0 0 6px",
+        }}>
+          {isProcessing ? <Skeleton className="h-8 w-3/4 inline-block" /> : (resource.title ?? resource.domain)}
+        </h1>
+        <HandUnderline />
+
+        {/* Summary */}
+        <div style={{ fontSize: "1.04em", lineHeight: 1.62, marginBottom: 26, marginTop: 18, color: "var(--muted-foreground)" }}>
           {isProcessing ? (
-            <Skeleton className="h-8 w-3/4" />
+            <>
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-2/3" />
+            </>
           ) : (
-            resource.title ?? resource.domain
+            resource.ai_summary ?? resource.description
           )}
         </div>
 
-        {/* Summary / description */}
-        {(resource.ai_summary || resource.description || isProcessing) && (
-          <div className="text-[15px] text-muted-foreground leading-relaxed">
-            {isProcessing ? (
-              <>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-2/3" />
-              </>
-            ) : (
-              resource.ai_summary ?? resource.description
-            )}
-          </div>
-        )}
-
         {/* Categories */}
         {(resource.categories.length > 0 || isProcessing) && (
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
             {isProcessing ? (
               <>
                 <Skeleton className="h-7 w-24 rounded-full" />
@@ -135,7 +218,7 @@ export default async function ResourcePage({ params }: Props) {
                 <Link
                   key={cat}
                   href={`/search?category=${encodeURIComponent(cat)}`}
-                  className="px-3.5 py-1 rounded-full bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/70 transition-colors"
+                  className="chip"
                 >
                   {cat}
                 </Link>
@@ -145,34 +228,46 @@ export default async function ResourcePage({ params }: Props) {
         )}
 
         {/* Tags */}
-        {(resource.tags.length > 0 || isProcessing) && (
-          <div className="text-sm text-muted-foreground pt-1">
-            {isProcessing ? (
-              <Skeleton className="h-4 w-48" />
-            ) : (
-              resource.tags.map((tag, i) => (
-                <span key={tag}>
-                  <Link
-                    href={`/search?q=${encodeURIComponent(tag)}`}
-                    className="hover:text-foreground transition-colors"
-                  >
-                    {tag}
-                  </Link>
-                  {i < resource.tags.length - 1 && (
-                    <span className="mx-1.5 text-border">·</span>
-                  )}
-                </span>
-              ))
-            )}
+        {resource.tags.length > 0 && !isProcessing && (
+          <div style={{ fontSize: "0.88em", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
+            {resource.tags.map((tag, i) => (
+              <span key={tag}>
+                <Link
+                  href={`/search?q=${encodeURIComponent(tag)}`}
+                  className="tag-link"
+                >
+                  #{tag}
+                </Link>
+                {i < resource.tags.length - 1 && (
+                  <span style={{ color: "var(--ds-border-strong)", margin: "0 3px" }}>·</span>
+                )}
+              </span>
+            ))}
           </div>
         )}
 
         {isProcessing && (
-          <p className="text-xs text-muted-foreground pt-1">
+          <p style={{ fontSize: "0.82em", color: "var(--ds-fg-subtle)", marginTop: 8 }}>
             Processing — this page will update shortly.
           </p>
         )}
       </div>
+
+      {/* Related */}
+      {related.length > 0 && (
+        <div style={{ marginTop: 56, paddingTop: 36, borderTop: "1px solid var(--border)" }}>
+          <div className="sec-head">
+            <span className="sec-title" style={{ fontSize: "1em" }}>
+              more like this
+            </span>
+          </div>
+          <div className="scatter">
+            {related.map((r) => (
+              <MemoCard key={r.id} resource={r} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

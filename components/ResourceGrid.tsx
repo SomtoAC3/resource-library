@@ -1,6 +1,7 @@
 "use client";
 
-import { ResourceCard } from "./ResourceCard";
+import { MemoCard } from "./MemoCard";
+import { ResourceRow } from "./ResourceCard";
 import type { Resource } from "@/lib/types";
 
 interface Props {
@@ -11,26 +12,32 @@ interface Props {
 export function ResourceGrid({ resources, view = "gallery" }: Props) {
   if (resources.length === 0) {
     return (
-      <p className="text-muted-foreground text-sm py-16 text-center">
-        No resources found.
-      </p>
+      <div className="empty-state">
+        <div style={{ fontSize: "1.6em", marginBottom: 6 }}>¯\_(ツ)_/¯</div>
+        <div style={{ fontSize: "1.02em", color: "var(--muted-foreground)", marginBottom: 4 }}>
+          Nothing pinned here yet.
+        </div>
+        <div style={{ fontSize: "0.9em", color: "var(--ds-fg-subtle)" }}>
+          Try another tag — or paste a link to stash one.
+        </div>
+      </div>
     );
   }
 
   if (view === "list") {
     return (
-      <div className="flex flex-col gap-1">
+      <div className="resource-list">
         {resources.map((r) => (
-          <ResourceCard key={r.id} resource={r} view="list" />
+          <ResourceRow key={r.id} resource={r} />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+    <div className="scatter">
       {resources.map((r) => (
-        <ResourceCard key={r.id} resource={r} view="gallery" />
+        <MemoCard key={r.id} resource={r} />
       ))}
     </div>
   );

@@ -50,30 +50,42 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const results = await searchResources(q, category);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-      {/* Search input */}
-      <Suspense>
-        <SearchBar className="w-full max-w-2xl" />
-      </Suspense>
+    <div className="container fade-in" style={{ paddingTop: 28, paddingBottom: 96 }}>
+      {/* Search bar */}
+      <div style={{ maxWidth: 640, marginBottom: 22 }}>
+        <Suspense>
+          <SearchBar />
+        </Suspense>
+      </div>
 
       {/* Filters row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 16,
+        marginBottom: 28,
+        flexWrap: "wrap",
+      }}>
         <Suspense>
           <CategoryFilter />
         </Suspense>
-        <div className="flex items-center gap-4 shrink-0">
-          {q && (
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{results.length}</span>{" "}
-              result{results.length !== 1 ? "s" : ""}
-              {category && (
-                <>
-                  {" "}in{" "}
-                  <span className="font-medium text-foreground">{category}</span>
-                </>
-              )}
-            </p>
-          )}
+
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+          <span style={{ fontSize: "0.84em", color: "var(--ds-fg-subtle)" }}>
+            <strong style={{ color: "var(--foreground)", fontWeight: 600 }}>
+              {results.length}
+            </strong>{" "}
+            result{results.length !== 1 ? "s" : ""}
+            {category && (
+              <>
+                {" "}in{" "}
+                <strong style={{ color: "var(--foreground)", fontWeight: 600 }}>
+                  {category}
+                </strong>
+              </>
+            )}
+          </span>
           <Suspense>
             <ViewToggle view={view} />
           </Suspense>

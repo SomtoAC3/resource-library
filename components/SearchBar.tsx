@@ -2,14 +2,22 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useRef } from "react";
-import { Search } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface Props {
   className?: string;
+  size?: "sm" | "md";
 }
 
-export function SearchBar({ className }: Props) {
+function SearchIcon({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.2-3.2" />
+    </svg>
+  );
+}
+
+export function SearchBar({ className, size = "md" }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -42,24 +50,23 @@ export function SearchBar({ className }: Props) {
     [navigate]
   );
 
+  const fieldSize = size === "sm" ? "field-sm" : "field-md";
+
   return (
-    <form onSubmit={handleSubmit} className={cn("relative", className)}>
-      <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-        <Search size={16} strokeWidth={2} />
-      </span>
-      <input
-        name="q"
-        type="search"
-        defaultValue={searchParams.get("q") ?? ""}
-        onChange={handleChange}
-        placeholder="Search resources…"
-        className={cn(
-          "w-full h-11 rounded-xl border border-border bg-card pl-9 pr-4 text-sm",
-          "placeholder:text-muted-foreground/60",
-          "focus:outline-none focus:ring-2 focus:ring-foreground/15 focus:border-foreground/25",
-          "transition-shadow duration-150"
-        )}
-      />
+    <form onSubmit={handleSubmit} className={className} style={{ width: "100%" }}>
+      <div className={`field ${fieldSize}`}>
+        <span className="ico">
+          <SearchIcon size={size === "sm" ? 14 : 16} />
+        </span>
+        <input
+          name="q"
+          type="search"
+          defaultValue={searchParams.get("q") ?? ""}
+          onChange={handleChange}
+          placeholder="Search resources, tags, domains…"
+          autoComplete="off"
+        />
+      </div>
     </form>
   );
 }
