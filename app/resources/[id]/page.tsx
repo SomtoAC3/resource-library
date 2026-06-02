@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RetryButton } from "@/components/RetryButton";
-import { MemoCard, getTint, getMark } from "@/components/MemoCard";
+import { MemoCard } from "@/components/MemoCard";
+import { getTint, getMark } from "@/lib/resource-utils";
 import type { Resource } from "@/lib/types";
 
 interface Props {
