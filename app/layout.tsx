@@ -16,8 +16,16 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "stash",
-  description: "The design stash — a library of the internet's best resources.",
+  title: "Stash",
+  description:
+    "Search resources, save references, and get AI-powered recommendations for what you're building.",
+
+  openGraph: {
+    title: "Stash",
+    description:
+      "Search resources, save references, and get AI-powered recommendations for what you're building.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
