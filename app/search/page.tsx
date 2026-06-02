@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SearchBar } from "@/components/SearchBar";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { ResourceGrid } from "@/components/ResourceGrid";
+import { Recommendations } from "@/components/Recommendations";
 import { ViewToggle } from "@/components/ViewToggle";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import type { Resource } from "@/lib/types";
@@ -100,6 +101,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       {/* Results grid — scrolls under the sticky bar */}
       <div className="container fade-in" style={{ paddingTop: 28 }}>
         <ResourceGrid resources={results} view={view} />
+
+        {results.length === 0 && q?.trim() && (
+          <Recommendations query={q.trim()} />
+        )}
       </div>
 
       <ScrollToTop />
