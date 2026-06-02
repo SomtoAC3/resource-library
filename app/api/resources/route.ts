@@ -41,11 +41,12 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createClient();
 
-  // Dedup: use limit(1) so it works even if duplicates already exist in DB
+  // Dedup: check both with and without trailing slash using .in() which
+  // handles URLs with special characters (://) correctly unlike .or()
   const { data: existingRows } = await supabase
     .from("resources")
     .select("*")
-    .or(`url.eq.${normalizedUrl},url.eq.${normalizedUrl}/`)
+    .in("url", [normalizedUrl, `${normalizedUrl}/`])
     .limit(1);
 
   const existing = existingRows?.[0] ?? null;
