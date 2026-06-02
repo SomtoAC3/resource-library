@@ -120,12 +120,13 @@ export function SearchBar({ className, size = "md" }: Props) {
               autoComplete="off" spellCheck={false}
             />
           </div>
-          {urlMode && (
-            <button type="submit" className="btn btn-primary"
-              style={{ height: size === "md" ? 40 : 34, flexShrink: 0 }}>
-              Stash 📌
-            </button>
-          )}
+          <button
+            type="submit"
+            className={`btn ${urlMode ? "btn-primary" : "btn-outline"}`}
+            style={{ height: size === "md" ? 40 : 34, flexShrink: 0 }}
+          >
+            {urlMode ? "Stash 📌" : "Search"}
+          </button>
         </form>
 
         {open && suggestions.length > 0 && (
