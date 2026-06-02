@@ -1,4 +1,5 @@
 export type ResourceStatus = "processing" | "ready" | "failed";
+export type ResourceType = "resource" | "reference";
 
 export interface Resource {
   id: string;
@@ -11,10 +12,13 @@ export interface Resource {
   og_image_url: string | null;
   screenshot_url: string | null;
   status: ResourceStatus;
+  type: ResourceType;
   tags: string[];
   categories: string[];
   source: string | null;
   submitted_by: string | null;
+  why_i_like_this: string | null;
+  inspiration_notes: string | null;
   created_at: string;
   updated_at: string;
 }

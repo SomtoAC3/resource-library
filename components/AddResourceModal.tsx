@@ -70,6 +70,9 @@ interface Props {
 export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
   const router = useRouter();
   const [url, setUrl] = useState(initialUrl);
+  const [type, setType] = useState<"resource" | "reference">("resource");
+  const [whyILikeThis, setWhyILikeThis] = useState("");
+  const [inspirationNotes, setInspirationNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(-1);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +101,12 @@ export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
       const res = await fetch("/api/resources", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: trimmed }),
+        body: JSON.stringify({
+          url: trimmed,
+          type,
+          ...(type === "reference" && whyILikeThis.trim() ? { why_i_like_this: whyILikeThis.trim() } : {}),
+          ...(type === "reference" && inspirationNotes.trim() ? { inspiration_notes: inspirationNotes.trim() } : {}),
+        }),
       });
       const data = await res.json();
       timers.forEach(clearTimeout);
@@ -141,7 +149,7 @@ export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
                 <path d="M12 5v14M5 12h14" />
               </svg>
             )}
-            {loading ? "Pinning it up…" : "Add a resource"}
+            {loading ? "Pinning it up…" : type === "reference" ? "Add a reference" : "Add a resource"}
           </div>
           <button
             type="button"
@@ -192,32 +200,115 @@ export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
             </>
           ) : (
             <>
+              {/* Type toggle */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+                {(["resource", "reference"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setType(t)}
+                    style={{
+                      padding: "5px 14px",
+                      borderRadius: 999,
+                      border: "1px solid var(--border)",
+                      fontSize: "0.82em",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      background: type === t ? "var(--foreground)" : "transparent",
+                      color: type === t ? "var(--background)" : "var(--muted-foreground)",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {t === "resource" ? "Resource" : "Reference"}
+                  </button>
+                ))}
+              </div>
+
               <p style={{ fontSize: "0.9em", color: "var(--muted-foreground)", marginTop: 0, marginBottom: 14 }}>
-                Paste any URL — we&rsquo;ll fetch a preview, write a summary, and file it under the right categories.
+                {type === "reference"
+                  ? "A product, app, or brand that inspires you — something you want to learn from."
+                  : "Paste any URL — we’ll fetch a preview, write a summary, and file it under the right categories."}
               </p>
 
-              <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
-                <div className="field field-md" style={{ flex: 1 }}>
-                  <span className="ico">
-                    {urlMode ? <LinkIcon /> : <SearchIcon />}
-                  </span>
-                  <input
-                    ref={inputRef}
-                    value={url}
-                    onChange={(e) => { setUrl(e.target.value); setError(null); }}
-                    placeholder="https://example.com"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
+              <form onSubmit={handleSubmit}>
+                <div style={{ display: "flex", gap: 8, marginBottom: type === "reference" ? 14 : 0 }}>
+                  <div className="field field-md" style={{ flex: 1 }}>
+                    <span className="ico">
+                      {urlMode ? <LinkIcon /> : <SearchIcon />}
+                    </span>
+                    <input
+                      ref={inputRef}
+                      value={url}
+                      onChange={(e) => { setUrl(e.target.value); setError(null); }}
+                      placeholder="https://example.com"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={!urlMode}
+                    style={{ opacity: urlMode ? 1 : 0.4, height: 40 }}
+                  >
+                    Stash it
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={!urlMode}
-                  style={{ opacity: urlMode ? 1 : 0.4, height: 40 }}
-                >
-                  Stash it
-                </button>
+
+                {type === "reference" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.78em", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ds-fg-subtle)", marginBottom: 6 }}>
+                        Why I Like This
+                      </label>
+                      <textarea
+                        value={whyILikeThis}
+                        onChange={e => setWhyILikeThis(e.target.value)}
+                        placeholder="Motion, Typography, Product polish…"
+                        rows={2}
+                        style={{
+                          width: "100%",
+                          padding: "8px 10px",
+                          background: "var(--secondary)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--radius)",
+                          fontSize: "0.88em",
+                          lineHeight: 1.6,
+                          resize: "none",
+                          fontFamily: "inherit",
+                          color: "var(--foreground)",
+                          outline: "none",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.78em", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ds-fg-subtle)", marginBottom: 6 }}>
+                        Inspiration Notes
+                      </label>
+                      <textarea
+                        value={inspirationNotes}
+                        onChange={e => setInspirationNotes(e.target.value)}
+                        placeholder="Subtle motion, excellent onboarding, trust signals…"
+                        rows={2}
+                        style={{
+                          width: "100%",
+                          padding: "8px 10px",
+                          background: "var(--secondary)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--radius)",
+                          fontSize: "0.88em",
+                          lineHeight: 1.6,
+                          resize: "none",
+                          fontFamily: "inherit",
+                          color: "var(--foreground)",
+                          outline: "none",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </form>
 
               {error && (

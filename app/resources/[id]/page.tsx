@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RetryButton } from "@/components/RetryButton";
 import { MemoCard } from "@/components/MemoCard";
+import { ReferenceNotes } from "@/components/ReferenceNotes";
 import { getTint, getMark } from "@/lib/resource-utils";
 import type { Resource } from "@/lib/types";
 
@@ -111,7 +112,7 @@ export default async function ResourcePage({ params }: Props) {
 
       {/* Content */}
       <div style={{ maxWidth: 660 }}>
-        {/* Domain + kind */}
+        {/* Domain + kind + type badge */}
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 16 }}>
           <span
             className="favicon"
@@ -124,6 +125,20 @@ export default async function ResourcePage({ params }: Props) {
             {mark}
           </span>
           <span className="eyebrow" style={{ fontSize: "0.72em" }}>{resource.domain}</span>
+          {resource.type === "reference" && (
+            <span style={{
+              fontFamily: "var(--font-jetbrains-mono, monospace)",
+              fontSize: "0.62em",
+              letterSpacing: "0.07em",
+              textTransform: "uppercase",
+              background: tint,
+              color: "#fff",
+              padding: "2px 7px",
+              borderRadius: 4,
+            }}>
+              Reference
+            </span>
+          )}
         </div>
 
         {/* Title */}
@@ -196,6 +211,19 @@ export default async function ResourcePage({ params }: Props) {
           </p>
         )}
       </div>
+
+      {/* Reference notes */}
+      {!isProcessing && (
+        <div style={{ maxWidth: 660 }}>
+          <ReferenceNotes
+            resourceId={resource.id}
+            initialType={resource.type}
+            whyILikeThis={resource.why_i_like_this}
+            inspirationNotes={resource.inspiration_notes}
+            tint={tint}
+          />
+        </div>
+      )}
 
       {/* Related */}
       {related.length > 0 && (

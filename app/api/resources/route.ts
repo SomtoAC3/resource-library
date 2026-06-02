@@ -57,12 +57,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(existing, { status: 200 });
   }
 
+  const type = body.type === "reference" ? "reference" : "resource";
+  const whyILikeThis = typeof body.why_i_like_this === "string" ? body.why_i_like_this : null;
+  const inspirationNotes = typeof body.inspiration_notes === "string" ? body.inspiration_notes : null;
+
   const { data: resource, error } = await supabase
     .from("resources")
     .insert({
       url: normalizedUrl,
       domain,
       status: "processing",
+      type,
+      why_i_like_this: whyILikeThis,
+      inspiration_notes: inspirationNotes,
       source: body.source ?? "web",
       submitted_by: body.submitted_by ?? null,
     })

@@ -15,7 +15,7 @@ import { getTint, getMark, getKind } from "@/lib/resource-utils";
 import { useBoard } from "@/lib/use-board";
 import { looksLikeUrl, toFullUrl, detectMode } from "@/lib/url-utils";
 import { CATEGORIES } from "@/lib/types";
-import type { Resource } from "@/lib/types";
+import type { Resource, ResourceType } from "@/lib/types";
 
 interface Suggestion {
   id: string;
@@ -195,6 +195,7 @@ export function BoardHome({ resources, totalCount }: Props) {
   const sugDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [value, setValue] = useState("");
+  const [homeType, setHomeType] = useState<ResourceType | "all">("all");
   const [addUrl, setAddUrl] = useState<string | null>(null);
   const [livePositions, setLivePositions] = useState<Map<string, Position>>(new Map());
   const [notes, setNotes] = useState<StickyNote[]>([]);
@@ -210,8 +211,11 @@ export function BoardHome({ resources, totalCount }: Props) {
   // Board state: exclusion-based — show latest unless hidden
   const { ready: boardReady, hide, show, isHidden, getPosition, savePosition } = useBoard();
 
-  // Resources to scatter: latest 6 that haven't been hidden
-  const visibleResources = resources.filter(r => !isHidden(r.id)).slice(0, 6);
+  // Resources to scatter: latest 6 that haven't been hidden, filtered by type
+  const visibleResources = resources
+    .filter(r => !isHidden(r.id))
+    .filter(r => homeType === "all" || r.type === homeType)
+    .slice(0, 6);
 
   // Compute live scatter positions from saved or default layout
   useEffect(() => {
@@ -431,6 +435,20 @@ export function BoardHome({ resources, totalCount }: Props) {
               <div className="stage-cats">
                 {CATEGORIES.map(c => (
                   <Link key={c} href={`/search?category=${encodeURIComponent(c)}`} className="chip">{c}</Link>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", gap: 6, marginTop: 10, justifyContent: "center" }}>
+                {(["all", "resource", "reference"] as const).map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    className="chip chip-accent"
+                    data-active={homeType === t ? "1" : "0"}
+                    onClick={() => setHomeType(t)}
+                  >
+                    {t === "all" ? "All" : t === "resource" ? "Resources" : "References"}
+                  </button>
                 ))}
               </div>
             </>

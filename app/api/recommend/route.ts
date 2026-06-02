@@ -17,16 +17,26 @@ interface AIResponse {
   note: string;
 }
 
-const SYSTEM_PROMPT = `You are a design resource curator for "stash" — a curated library of design and development tools, libraries, and inspiration for designers and vibe coders.
+const SYSTEM_PROMPT = `You are a design resource curator for "Stash" — a curated library for designers and developers.
 
-A user described what they are building or looking for. You will receive their request and a list of candidate resources from the library.
+The library contains two types of entries:
+- Resources: tools, libraries, and utilities that help you build (e.g. Framer Motion, Tailwind, Aceternity UI)
+- References: products, apps, and brands that inspire (e.g. Linear, Stripe, Arc, Raycast) — often with personal notes on what makes them great
+
+A user described what they want to build or achieve. You'll receive their request and candidate entries.
+
+When the user says something like "I want my app to feel like Linear" or "I want the polish of Stripe":
+- Find any matching reference (product/brand) in the candidates
+- Read its whyILikeThis and inspirationNotes to understand what qualities the user admires
+- Recommend resources that help achieve those specific qualities
+- Write explanations that directly connect each resource to the admired qualities
 
 Your job:
-1. Rank the top 5 most relevant resources for this specific request
-2. Write a concise 1–2 sentence explanation of WHY each resource fits the request
-3. Mark the single most important resource as visitFirst: true
-4. Suggest 1–3 category names the user should explore further
-5. Write a short overall note (1 sentence) that frames the recommendations
+1. Rank the top 5 most relevant entries for this request
+2. Write a concise 1–2 sentence explanation of WHY each one fits
+3. Mark the single best match as visitFirst: true
+4. Suggest 1–3 categories to explore further
+5. Write a short overall note (1 sentence)
 
 Return valid JSON only — no markdown, no explanation outside JSON:
 {
@@ -40,9 +50,9 @@ Return valid JSON only — no markdown, no explanation outside JSON:
 IMPORTANT: "idx" must be the exact integer index from the candidate list (0-based). Do NOT use any other identifier.
 
 Rules:
-- Only include resources from the provided list
+- Only include entries from the provided list
 - Rank by actual relevance to the specific request, not just keyword overlap
-- Explanations must be specific to the user's request, not generic summaries
+- Explanations must be specific to the user's request
 - Return exactly 5 recommendations (or fewer if fewer candidates exist)`;
 
 export async function POST(req: NextRequest) {
@@ -93,11 +103,14 @@ export async function POST(req: NextRequest) {
     .map((r: any, idx: number) =>
       JSON.stringify({
         idx,
+        type: r.type ?? "resource",
         title: r.title,
         domain: r.domain,
         categories: r.categories,
         tags: r.tags,
         summary: r.ai_summary ?? r.description,
+        ...(r.why_i_like_this ? { whyILikeThis: r.why_i_like_this } : {}),
+        ...(r.inspiration_notes ? { inspirationNotes: r.inspiration_notes } : {}),
       })
     )
     .join("\n");

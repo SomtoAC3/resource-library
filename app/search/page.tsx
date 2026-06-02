@@ -2,23 +2,26 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { SearchBar } from "@/components/SearchBar";
 import { CategoryFilter } from "@/components/CategoryFilter";
+import { TypeFilter } from "@/components/TypeFilter";
 import { ResourceGrid } from "@/components/ResourceGrid";
 import { Recommendations } from "@/components/Recommendations";
 import { ViewToggle } from "@/components/ViewToggle";
 import { ScrollToTop } from "@/components/ScrollToTop";
-import type { Resource } from "@/lib/types";
+import type { Resource, ResourceType } from "@/lib/types";
 
 interface SearchPageProps {
   searchParams: Promise<{
     q?: string;
     category?: string;
+    type?: string;
     view?: string;
   }>;
 }
 
 async function searchResources(
   q: string | undefined,
-  category: string | undefined
+  category: string | undefined,
+  type: ResourceType | undefined
 ): Promise<Resource[]> {
   const supabase = await createClient();
 
@@ -31,6 +34,7 @@ async function searchResources(
       .limit(48);
 
     if (category) query = query.contains("categories", [category]);
+    if (type) query = query.eq("type", type);
 
     const { data } = await query;
     return data ?? [];
@@ -41,15 +45,17 @@ async function searchResources(
     filter_category: category ?? null,
     result_limit: 48,
     result_offset: 0,
+    filter_type: type ?? null,
   });
 
   return data ?? [];
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const { q, category, view: viewParam } = await searchParams;
+  const { q, category, type: typeParam, view: viewParam } = await searchParams;
   const view = viewParam === "list" ? "list" : "gallery";
-  const results = await searchResources(q, category);
+  const type = typeParam === "resource" || typeParam === "reference" ? typeParam : undefined;
+  const results = await searchResources(q, category, type);
 
   return (
     <div style={{ paddingBottom: 120 }}>
@@ -63,7 +69,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </Suspense>
           </div>
 
-          {/* Filters + count + view toggle */}
+          {/* Type filter */}
+          <div style={{ marginBottom: 10 }}>
+            <Suspense>
+              <TypeFilter />
+            </Suspense>
+          </div>
+
+          {/* Category filters + count + view toggle */}
           <div style={{
             display: "flex",
             alignItems: "center",
