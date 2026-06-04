@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Props {
   resourceId: string;
@@ -24,6 +24,16 @@ export function ResourceThumbnail({ resourceId, src, alt }: Props) {
   const [broken, setBroken] = useState(!src);
   const [loading, setLoading] = useState(false);
   const [currentSrc, setCurrentSrc] = useState<string | null>(src);
+  const [toast, setToast] = useState(false);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+
+  const showToast = () => {
+    setToast(true);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(false), 3000);
+  };
 
   const refetch = async () => {
     setLoading(true);
@@ -33,6 +43,8 @@ export function ResourceThumbnail({ resourceId, src, alt }: Props) {
         const { url } = await res.json();
         setCurrentSrc(url);
         setBroken(false);
+      } else {
+        showToast();
       }
     } finally {
       setLoading(false);
@@ -72,6 +84,11 @@ export function ResourceThumbnail({ resourceId, src, alt }: Props) {
         >
           <RefreshIcon />
         </button>
+      )}
+      {toast && (
+        <div className="toast-tr" role="status">
+          No thumbnail found for this resource
+        </div>
       )}
     </>
   );
