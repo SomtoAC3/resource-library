@@ -63,6 +63,7 @@ export function ResourceThumbnail({ resourceId, src, alt }: Props) {
           className="object-cover object-top"
           priority
           onError={() => setBroken(true)}
+        onLoad={e => { if ((e.currentTarget as HTMLImageElement).naturalWidth === 0) setBroken(true); }}
         />
       )}
       {broken && (
