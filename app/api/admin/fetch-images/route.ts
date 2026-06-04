@@ -16,10 +16,18 @@ async function fetchImageMeta(url: string) {
     const html = await res.text();
     const $ = load(html);
 
-    const og_image =
+    const og_image_raw =
       $('meta[property="og:image"]').attr("content") ||
       $('meta[name="twitter:image"]').attr("content") ||
       null;
+
+    const og_image = og_image_raw
+      ? og_image_raw.startsWith("http")
+        ? og_image_raw
+        : og_image_raw.startsWith("//")
+        ? `${parsed.protocol}${og_image_raw}`
+        : `${parsed.protocol}//${parsed.host}${og_image_raw.startsWith("/") ? "" : "/"}${og_image_raw}`
+      : null;
 
     const faviconHref =
       $('link[rel="icon"]').attr("href") ||
