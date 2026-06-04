@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ResourceThumbnail } from "@/components/ResourceThumbnail";
+import { BackButton } from "@/components/BackButton";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,14 +38,6 @@ async function getRelated(resource: Resource): Promise<Resource[]> {
   return data ?? [];
 }
 
-function ArrowLeftIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5M11 18l-6-6 6-6" />
-    </svg>
-  );
-}
-
 function ExternalIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -70,9 +63,7 @@ export default async function ResourcePage({ params }: Props) {
     <div className="container fade-in" style={{ maxWidth: 880, paddingTop: 24, paddingBottom: 96 }}>
       {/* Back + actions */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
-        <Link href="/search" className="link-muted" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <ArrowLeftIcon /> Back
-        </Link>
+        <BackButton />
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {resource.status === "failed" && <RetryButton resourceId={resource.id} />}
           <a
