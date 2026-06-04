@@ -209,7 +209,7 @@ export function BoardHome({ resources, totalCount }: Props) {
   const urlMode = mode === "submit";
 
   // Board state: exclusion-based — show latest unless hidden
-  const { ready: boardReady, hide, show, isHidden, getPosition, savePosition } = useBoard();
+  const { ready: boardReady, hide, show, isHidden, getPosition, savePosition, setHomepageIds } = useBoard();
 
   // Resources to scatter: latest 6 that haven't been hidden, filtered by type
   const visibleResources = resources
@@ -238,6 +238,13 @@ export function BoardHome({ resources, totalCount }: Props) {
       }
       return next;
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardReady, visibleResources.map(r => r.id).join(",")]);
+
+  // Keep homepage IDs in sync so ResourceGrid can show correct +/- indicators
+  useEffect(() => {
+    if (!boardReady) return;
+    setHomepageIds(visibleResources.map(r => r.id));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardReady, visibleResources.map(r => r.id).join(",")]);
 

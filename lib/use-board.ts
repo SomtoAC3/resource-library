@@ -6,10 +6,11 @@ const KEY = "stash_board";
 
 interface BoardData {
   hidden: string[];                              // IDs removed from home board
+  homepageIds: string[];                         // IDs currently visible on the homepage board
   positions: Record<string, { x: number; y: number }>; // saved drag positions
 }
 
-const empty: BoardData = { hidden: [], positions: {} };
+const empty: BoardData = { hidden: [], homepageIds: [], positions: {} };
 
 function load(): BoardData {
   try {
@@ -33,7 +34,11 @@ export function useBoard() {
   }, []);
 
   const hide = useCallback((id: string) => {
-    update(d => ({ ...d, hidden: [...new Set([...d.hidden, id])] }));
+    update(d => ({
+      ...d,
+      hidden: [...new Set([...d.hidden, id])],
+      homepageIds: d.homepageIds.filter(h => h !== id),
+    }));
   }, [update]);
 
   const show = useCallback((id: string) => {
@@ -47,5 +52,11 @@ export function useBoard() {
   const isHidden = useCallback((id: string) => data.hidden.includes(id), [data.hidden]);
   const getPosition = useCallback((id: string) => data.positions[id] ?? null, [data.positions]);
 
-  return { ready, hide, show, isHidden, getPosition, savePosition };
+  const setHomepageIds = useCallback((ids: string[]) => {
+    update(d => ({ ...d, homepageIds: ids }));
+  }, [update]);
+
+  const isOnHomepage = useCallback((id: string) => data.homepageIds.includes(id), [data.homepageIds]);
+
+  return { ready, hide, show, isHidden, getPosition, savePosition, setHomepageIds, isOnHomepage };
 }
