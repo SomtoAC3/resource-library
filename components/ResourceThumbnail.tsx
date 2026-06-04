@@ -46,6 +46,8 @@ export function ResourceThumbnail({ resourceId, src, alt }: Props) {
       } else {
         showToast();
       }
+    } catch {
+      showToast();
     } finally {
       setLoading(false);
     }
