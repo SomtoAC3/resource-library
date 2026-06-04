@@ -55,6 +55,7 @@ export function MemoCard({ resource, style, noLink = false, pinned, onTogglePin 
           type="button"
           className="memo-pin-btn"
           title={pinned ? "Remove from board" : "Add to board"}
+          onPointerDown={e => e.stopPropagation()}
           onClick={e => { e.preventDefault(); e.stopPropagation(); onTogglePin(e); }}
         >
           {pinned ? "−" : "+"}
