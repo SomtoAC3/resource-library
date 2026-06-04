@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { ResourceThumbnail } from "@/components/ResourceThumbnail";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -101,12 +101,10 @@ export default async function ResourcePage({ params }: Props) {
           <Skeleton className="absolute inset-0 rounded-none" />
         )}
         {!isProcessing && image && (
-          <Image
+          <ResourceThumbnail
+            resourceId={resource.id}
             src={image}
             alt={resource.title ?? resource.domain ?? ""}
-            fill
-            className="object-cover object-top"
-            priority
           />
         )}
       </div>
