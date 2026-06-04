@@ -208,14 +208,22 @@ export function BoardHome({ resources, totalCount }: Props) {
   const mode = detectMode(value);
   const urlMode = mode === "submit";
 
-  // Board state: exclusion-based — show latest unless hidden
-  const { ready: boardReady, hide, show, isHidden, getPosition, savePosition } = useBoard();
+  // Board state: inclusion-based via boardPins
+  const { ready: boardReady, boardPins, initBoardPins, removeFromBoard, getPosition, savePosition } = useBoard();
 
-  // Resources to scatter: latest 6 that haven't been hidden, filtered by type
-  const visibleResources = resources
-    .filter(r => !isHidden(r.id))
-    .filter(r => homeType === "all" || r.type === homeType)
-    .slice(0, 6);
+  // Seed boardPins on first visit using the latest 6 resources
+  useEffect(() => {
+    if (!boardReady) return;
+    initBoardPins(resources.slice(0, 6).map(r => r.id));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardReady]);
+
+  // Resources to scatter: whatever is explicitly pinned, filtered by type
+  const visibleResources = boardReady
+    ? resources
+        .filter(r => boardPins.includes(r.id))
+        .filter(r => homeType === "all" || r.type === homeType)
+    : [];
 
   // Compute live scatter positions from saved or default layout
   useEffect(() => {
@@ -336,7 +344,7 @@ export function BoardHome({ resources, totalCount }: Props) {
                 onOpen={() => router.push(`/resources/${r.id}`)}>
                 <MemoCard resource={r} noLink
                   pinned={true}
-                  onTogglePin={() => hide(r.id)} />
+                  onTogglePin={() => removeFromBoard(r.id)} />
               </DraggablePin>
             );
           })}
