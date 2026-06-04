@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
 interface Props {
@@ -26,6 +25,15 @@ export function ResourceThumbnail({ resourceId, src, alt }: Props) {
   const [currentSrc, setCurrentSrc] = useState<string | null>(src);
   const [toast, setToast] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // After mount, check if the image already completed (preloaded/cached) before
+  // React had a chance to attach onLoad/onError.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    if (img.complete && img.naturalWidth === 0) setBroken(true);
+  }, [currentSrc]);
 
   useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
 
@@ -56,14 +64,14 @@ export function ResourceThumbnail({ resourceId, src, alt }: Props) {
   return (
     <>
       {currentSrc && !broken && (
-        <Image
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          ref={imgRef}
           src={currentSrc}
           alt={alt}
-          fill
-          className="object-cover object-top"
-          priority
           onError={() => setBroken(true)}
-        onLoad={e => { if ((e.currentTarget as HTMLImageElement).naturalWidth === 0) setBroken(true); }}
+          onLoad={e => { if ((e.currentTarget as HTMLImageElement).naturalWidth === 0) setBroken(true); }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
         />
       )}
       {broken && (
