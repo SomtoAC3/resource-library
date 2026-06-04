@@ -43,14 +43,27 @@ export function ResourceThumbnail({ resourceId, src, alt }: Props) {
     toastTimer.current = setTimeout(() => setToast(false), 3000);
   };
 
+  const probeUrl = (url: string): Promise<boolean> =>
+    new Promise(resolve => {
+      const img = new window.Image();
+      img.onload = () => resolve(img.naturalWidth > 0);
+      img.onerror = () => resolve(false);
+      img.src = url;
+    });
+
   const refetch = async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/resources/${resourceId}/refetch-image`, { method: "POST" });
       if (res.ok) {
         const { url } = await res.json();
-        setCurrentSrc(url);
-        setBroken(false);
+        const valid = await probeUrl(url);
+        if (valid) {
+          setCurrentSrc(url);
+          setBroken(false);
+        } else {
+          showToast();
+        }
       } else {
         showToast();
       }
