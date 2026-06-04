@@ -5,12 +5,12 @@ import { useState, useEffect, useCallback } from "react";
 const KEY = "stash_board";
 
 interface BoardData {
-  hidden: string[];                              // IDs removed from home board
-  homepageIds: string[];                         // IDs currently visible on the homepage board
+  pinnedIds: string[];                           // IDs explicitly pinned to the homepage
+  initialized: boolean;                          // false = first session, auto-init with latest 6
   positions: Record<string, { x: number; y: number }>; // saved drag positions
 }
 
-const empty: BoardData = { hidden: [], homepageIds: [], positions: {} };
+const empty: BoardData = { pinnedIds: [], initialized: false, positions: {} };
 
 function load(): BoardData {
   try {
@@ -33,30 +33,42 @@ export function useBoard() {
     setData(prev => { const next = fn(prev); save(next); return next; });
   }, []);
 
-  const hide = useCallback((id: string) => {
+  // Called once on first session to seed the default 6 latest pins
+  const initialize = useCallback((ids: string[]) => {
+    update(d => ({ ...d, pinnedIds: ids, initialized: true }));
+  }, [update]);
+
+  const pin = useCallback((id: string) => {
     update(d => ({
       ...d,
-      hidden: [...new Set([...d.hidden, id])],
-      homepageIds: d.homepageIds.filter(h => h !== id),
+      pinnedIds: [...new Set([...d.pinnedIds, id])],
+      initialized: true,
     }));
   }, [update]);
 
-  const show = useCallback((id: string) => {
-    update(d => ({ ...d, hidden: d.hidden.filter(h => h !== id) }));
+  const unpin = useCallback((id: string) => {
+    update(d => ({
+      ...d,
+      pinnedIds: d.pinnedIds.filter(p => p !== id),
+      initialized: true,
+    }));
   }, [update]);
 
   const savePosition = useCallback((id: string, x: number, y: number) => {
     update(d => ({ ...d, positions: { ...d.positions, [id]: { x, y } } }));
   }, [update]);
 
-  const isHidden = useCallback((id: string) => data.hidden.includes(id), [data.hidden]);
+  const isOnHomepage = useCallback((id: string) => data.pinnedIds.includes(id), [data.pinnedIds]);
   const getPosition = useCallback((id: string) => data.positions[id] ?? null, [data.positions]);
 
-  const setHomepageIds = useCallback((ids: string[]) => {
-    update(d => ({ ...d, homepageIds: ids }));
-  }, [update]);
-
-  const isOnHomepage = useCallback((id: string) => data.homepageIds.includes(id), [data.homepageIds]);
-
-  return { ready, hide, show, isHidden, getPosition, savePosition, setHomepageIds, isOnHomepage };
+  return {
+    ready,
+    initialized: data.initialized,
+    pin,
+    unpin,
+    initialize,
+    isOnHomepage,
+    getPosition,
+    savePosition,
+  };
 }

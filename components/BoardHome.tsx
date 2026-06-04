@@ -208,14 +208,24 @@ export function BoardHome({ resources, totalCount }: Props) {
   const mode = detectMode(value);
   const urlMode = mode === "submit";
 
-  // Board state: exclusion-based — show latest unless hidden
-  const { ready: boardReady, hide, show, isHidden, getPosition, savePosition, setHomepageIds } = useBoard();
+  // Board state: explicit inclusion — pinned IDs are the homepage; default to latest 6 on first session
+  const { ready: boardReady, initialized, pin, unpin, initialize, isOnHomepage, getPosition, savePosition } = useBoard();
 
-  // Resources to scatter: latest 6 that haven't been hidden, filtered by type
-  const visibleResources = resources
-    .filter(r => !isHidden(r.id))
-    .filter(r => homeType === "all" || r.type === homeType)
-    .slice(0, 6);
+  // Before first-session init, fall back to the 6 latest so the board isn't empty during the effect
+  const pinnedResources = initialized
+    ? resources.filter(r => isOnHomepage(r.id))
+    : resources.slice(0, 6);
+
+  // Resources to scatter: pinned resources filtered by type
+  const visibleResources = pinnedResources
+    .filter(r => homeType === "all" || r.type === homeType);
+
+  // On the very first session, seed pinnedIds with the 6 latest resources
+  useEffect(() => {
+    if (!boardReady || initialized) return;
+    initialize(resources.slice(0, 6).map(r => r.id));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardReady, initialized]);
 
   // Compute live scatter positions from saved or default layout
   useEffect(() => {
@@ -238,13 +248,6 @@ export function BoardHome({ resources, totalCount }: Props) {
       }
       return next;
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boardReady, visibleResources.map(r => r.id).join(",")]);
-
-  // Keep homepage IDs in sync so ResourceGrid can show correct +/- indicators
-  useEffect(() => {
-    if (!boardReady) return;
-    setHomepageIds(visibleResources.map(r => r.id));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardReady, visibleResources.map(r => r.id).join(",")]);
 
@@ -343,7 +346,7 @@ export function BoardHome({ resources, totalCount }: Props) {
                 onOpen={() => router.push(`/resources/${r.id}`)}>
                 <MemoCard resource={r} noLink
                   pinned={true}
-                  onTogglePin={() => hide(r.id)} />
+                  onTogglePin={() => unpin(r.id)} />
               </DraggablePin>
             );
           })}
