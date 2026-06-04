@@ -5,7 +5,7 @@ import { useState } from "react";
 
 interface Props {
   resourceId: string;
-  src: string;
+  src: string | null;
   alt: string;
 }
 
@@ -21,9 +21,9 @@ function RefreshIcon() {
 }
 
 export function ResourceThumbnail({ resourceId, src, alt }: Props) {
-  const [broken, setBroken] = useState(false);
+  const [broken, setBroken] = useState(!src);
   const [loading, setLoading] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState(src);
+  const [currentSrc, setCurrentSrc] = useState<string | null>(src);
 
   const refetch = async () => {
     setLoading(true);
@@ -41,14 +41,16 @@ export function ResourceThumbnail({ resourceId, src, alt }: Props) {
 
   return (
     <>
-      <Image
-        src={currentSrc}
-        alt={alt}
-        fill
-        className="object-cover object-top"
-        priority
-        onError={() => setBroken(true)}
-      />
+      {currentSrc && !broken && (
+        <Image
+          src={currentSrc}
+          alt={alt}
+          fill
+          className="object-cover object-top"
+          priority
+          onError={() => setBroken(true)}
+        />
+      )}
       {broken && (
         <button
           type="button"

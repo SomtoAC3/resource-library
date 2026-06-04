@@ -91,10 +91,10 @@ export default async function ResourcePage({ params }: Props) {
         {isProcessing && (
           <Skeleton className="absolute inset-0 rounded-none" />
         )}
-        {!isProcessing && image && (
+        {!isProcessing && (
           <ResourceThumbnail
             resourceId={resource.id}
-            src={image}
+            src={image ?? null}
             alt={resource.title ?? resource.domain ?? ""}
           />
         )}
