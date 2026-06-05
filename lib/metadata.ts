@@ -18,7 +18,7 @@ export async function extractMetadata(url: string): Promise<ExtractedMetadata> {
   });
 
   if (!res.ok) {
-    return { title: null, description: null, og_image_url: null, favicon_url: null, domain };
+    throw new Error(`HTTP ${res.status} ${res.statusText}`);
   }
 
   const html = await res.text();
