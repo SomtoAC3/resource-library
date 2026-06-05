@@ -244,6 +244,9 @@ export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
                       }}
                       placeholder="https://example.com"
                       autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      inputMode="url"
                       spellCheck={false}
                     />
                   </div>

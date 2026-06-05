@@ -388,7 +388,10 @@ export function BoardHome({ resources, totalCount }: Props) {
                         else if (e.key === "Escape") { setSugOpen(false); setActiveIndex(-1); }
                       }}
                       placeholder="search, paste a link, or describe what you're building…"
-                      autoComplete="off" spellCheck={false}
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck={false}
                     />
                   </div>
                   <button type="submit" disabled={!value.trim()}
