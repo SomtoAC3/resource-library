@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function ResourceGrid({ resources, view = "gallery" }: Props) {
-  const { isOnBoard, addToBoard, removeFromBoard } = useBoard();
+  const { isOnHomepage, pin, unpin } = useBoard();
 
   if (resources.length === 0) {
     return <EmptyState />;
@@ -34,8 +34,8 @@ export function ResourceGrid({ resources, view = "gallery" }: Props) {
         <MemoCard
           key={r.id}
           resource={r}
-          pinned={isOnBoard(r.id)}
-          onTogglePin={() => isOnBoard(r.id) ? removeFromBoard(r.id) : addToBoard(r.id)}
+          pinned={isOnHomepage(r.id)}
+          onTogglePin={() => isOnHomepage(r.id) ? unpin(r.id) : pin(r.id)}
         />
       ))}
     </div>

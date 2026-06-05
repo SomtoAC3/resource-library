@@ -1,0 +1,26 @@
+{
+  "name": "Stash",
+  "short_name": "Stash",
+  "description": "Search resources, save references, and get AI-powered recommendations.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2ead6",
+  "theme_color": "#f2ead6",
+  "icons": [
+    {
+      "src": "/stash-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

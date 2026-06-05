@@ -537,3 +537,59 @@ body::before {
 .link-muted:hover { color: var(--ds-accent); }
 .tag-link { color: var(--ds-fg-subtle); transition: color 0.13s; text-decoration: none; }
 .tag-link:hover { color: var(--ds-accent); }
+
+/* Pin button always visible on touch devices (no hover) */
+@media (hover: none) {
+  .memo-pin-btn { opacity: 1; transform: scale(1); }
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  /* ── Homepage: full-height canvas, centered search, footer below ── */
+  .home-canvas {
+    min-height: calc(100svh - 90px);
+    display: flex;
+    flex-direction: column;
+  }
+  .board-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0 12px;
+  }
+  .stage-center { padding: 0 4px; }
+  .home-hero { display: none; }
+  .home-type-filter { display: none; }
+  .stage-hint { display: none; }
+  .stage-foot { padding: 12px 0 28px; }
+
+  /* Category chips: scroll horizontally without wrapping */
+  .stage-cats {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 0 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 14px;
+  }
+  .stage-cats::-webkit-scrollbar { display: none; }
+
+  /* ── Search/grid pages: smaller memo cards ── */
+  :root { --memo-size: 168px; }
+  .scatter { gap: 16px 14px; padding-top: 4px; }
+  .memo { padding: 14px 14px 12px; }
+  .memo:hover { transform: rotate(0deg) translateY(-6px) scale(1.08); }
+  .memo-title { font-size: 1em; }
+  .memo-sum { -webkit-line-clamp: 2; }
+
+  /* ── Detail page ── */
+  .resource-hero { aspect-ratio: 16 / 9 !important; }
+  .resource-detail-top { flex-wrap: wrap; gap: 10px; margin-bottom: 16px !important; }
+  .resource-detail-top .btn-primary { font-size: 0.84em; height: 32px; padding: 0 12px; }
+
+  /* Search sticky header: tighter on mobile */
+  .search-sticky { padding: 10px 0; }
+}

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { BoardHome } from "@/components/BoardHome";
 import type { Resource } from "@/lib/types";
@@ -18,5 +19,9 @@ async function getHomeData(): Promise<{ resources: Resource[]; count: number }> 
 export default async function HomePage() {
   const { resources, count } = await getHomeData();
 
-  return <BoardHome resources={resources} totalCount={count} />;
+  return (
+    <Suspense>
+      <BoardHome resources={resources} totalCount={count} />
+    </Suspense>
+  );
 }

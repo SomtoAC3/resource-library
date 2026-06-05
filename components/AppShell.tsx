@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { HoverEffect } from "./HoverEffect";
 
@@ -8,6 +9,12 @@ interface Props {
 }
 
 export function AppShell({ children }: Props) {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
   return (
     <div className="shell">
       <HoverEffect />
