@@ -551,7 +551,7 @@ body::before {
   .home-hero .eyebrow { display: none; }
   .home-hero-secondary { display: none; }
   .stage-cats { display: none; }
-  .home-type-filter { display: none; }
+  .home-type-filter { display: none !important; }
   .stage-hint { display: none; }
   .stage-foot { padding: 16px 0 32px; }
 

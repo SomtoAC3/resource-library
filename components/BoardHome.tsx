@@ -461,7 +461,7 @@ export function BoardHome({ resources, totalCount }: Props) {
                 ))}
               </div>
 
-              <div className="home-type-filter" style={{ display: "flex", gap: 6, marginTop: 10, justifyContent: "center" }}>
+              <div className="home-type-filter" style={{ gap: 6, marginTop: 10, justifyContent: "center" }}>
                 {(["all", "resource", "reference"] as const).map(t => (
                   <button
                     key={t}
