@@ -555,26 +555,17 @@ body::before {
     flex: 1;
     min-height: 0;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    padding: 40px 0 20px;
+    padding: 24px 0;
   }
   .stage-center { padding: 0 20px; }
+  .home-hero .eyebrow { display: none; }
+  .home-hero-secondary { display: none; }
+  .stage-cats { display: none; }
   .home-type-filter { display: none; }
   .stage-hint { display: none; }
   .stage-foot { padding: 16px 0 32px; }
-
-  /* Category chips: scroll horizontally without wrapping */
-  .stage-cats {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    justify-content: flex-start;
-    padding: 0 2px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    margin-top: 14px;
-  }
-  .stage-cats::-webkit-scrollbar { display: none; }
 
   /* ── Memo cards: hide eye label and pin toggle ── */
   .memo-eye { display: none; }
