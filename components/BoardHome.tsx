@@ -200,8 +200,6 @@ export function BoardHome({ resources, totalCount }: Props) {
   const [addUrl, setAddUrl] = useState<string | null>(null);
   const [livePositions, setLivePositions] = useState<Map<string, Position>>(new Map());
   const [notes, setNotes] = useState<StickyNote[]>([]);
-  const [clip, setClip] = useState<string | null>(null);
-  const [clipDismissed, setClipDismissed] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [sugOpen, setSugOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -267,12 +265,12 @@ export function BoardHome({ resources, totalCount }: Props) {
     savePosition(id, x, y);
   }, [savePosition]);
 
-  // Clipboard awareness
+  // Clipboard awareness — go straight to modal, skip the intermediate banner
   useEffect(() => {
     let cancelled = false;
     const consider = (text: string) => {
       const t = text.trim();
-      if (!cancelled && t && looksLikeUrl(t) && !clipDismissed) setClip(t);
+      if (!cancelled && t && looksLikeUrl(t)) setAddUrl(toFullUrl(t));
     };
     const tryRead = async () => {
       try { if (navigator.clipboard?.readText) consider(await navigator.clipboard.readText()); }
@@ -282,12 +280,13 @@ export function BoardHome({ resources, totalCount }: Props) {
     const onFocus = () => tryRead();
     const onPaste = (e: ClipboardEvent) => {
       const t = e.clipboardData?.getData("text") ?? "";
-      if (looksLikeUrl(t.trim())) { setClipDismissed(false); setClip(t.trim()); }
+      if (looksLikeUrl(t.trim())) setAddUrl(toFullUrl(t.trim()));
     };
     window.addEventListener("focus", onFocus);
     window.addEventListener("paste", onPaste);
     return () => { cancelled = true; window.removeEventListener("focus", onFocus); window.removeEventListener("paste", onPaste); };
-  }, [clipDismissed]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Suggestions fetch
   const fetchSuggestions = useCallback(async (q: string) => {
@@ -339,9 +338,6 @@ export function BoardHome({ resources, totalCount }: Props) {
     }]);
   };
 
-  const short = (u: string) =>
-    u.replace(/^https?:\/\//i, "").replace(/^www\./i, "").slice(0, 46);
-
   return (
     <div className="home-canvas fade-in">
       <div className="board-stage" ref={stageRef} onClick={spawnNote}>
@@ -372,22 +368,8 @@ export function BoardHome({ resources, totalCount }: Props) {
 
         {/* Center stage */}
         <div className="stage-center">
-          {clip ? (
-            <div className="clipnote alert">
-              <p className="eyebrow" style={{ marginBottom: 12 }}>📋 spotted in your clipboard</p>
-              <h1 style={{ fontSize: "clamp(1.5rem, 3.4vw, 2rem)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.12, margin: "0 0 14px" }}>
-                Ooh, a link! Want to stash it?
-              </h1>
-              <div className="clip-url" style={{ marginBottom: 18 }}>{short(clip)}</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
-                <button type="button" className="btn btn-primary btn-lg" onClick={() => { setAddUrl(toFullUrl(clip)); setClip(null); }}>
-                  Pin it up 📌
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="home-hero">
+          <>
+            <div className="home-hero">
                 <p className="eyebrow" style={{ marginBottom: 12 }}>
                   the design stash · {totalCount} pinned
                 </p>
@@ -472,7 +454,6 @@ export function BoardHome({ resources, totalCount }: Props) {
                 ))}
               </div>
             </>
-          )}
         </div>
       </div>
 
