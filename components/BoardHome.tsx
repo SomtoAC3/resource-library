@@ -56,6 +56,24 @@ function defaultPos(index: number, W: number, H: number): Position {
 
 // ── Icons ───────────────────────────────────────────────────────────────
 
+function LinkIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1" />
+      <path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.2-3.2" />
+    </svg>
+  );
+}
+
 function ArrowRightIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -187,6 +205,7 @@ export function BoardHome({ resources, totalCount }: Props) {
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const mode = detectMode(value);
+  const urlMode = mode === "submit";
 
   // Board state: explicit inclusion — pinned IDs are the homepage; default to latest 6 on first session
   const { ready: boardReady, initialized, pin, unpin, initialize, isOnHomepage, getPosition, savePosition } = useBoard();
@@ -354,7 +373,8 @@ export function BoardHome({ resources, totalCount }: Props) {
               <div ref={searchWrapRef} className="suggestions-wrap">
                 <form onSubmit={handleSubmit} style={{ display: "flex", gap: 10 }}>
                   <div className="field field-lg" style={{ flex: 1 }}>
-                    <input style={{ paddingLeft: 16 }}
+                    <span className="ico">{urlMode ? <LinkIcon /> : <SearchIcon />}</span>
+                    <input
                       value={value}
                       onChange={e => {
                         const v = e.target.value;
