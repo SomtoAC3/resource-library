@@ -525,14 +525,6 @@ body::before {
 .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .sec-title { font-size: 0.82em; font-weight: 600; letter-spacing: -0.01em; color: var(--foreground); }
 
-/* ── Paste trigger (inline button styled as a link) ── */
-.paste-trigger {
-  background: none; border: none; padding: 0; margin: 0;
-  font: inherit; color: var(--ds-accent); cursor: pointer;
-  text-decoration: underline; text-underline-offset: 2px;
-}
-.paste-trigger:hover { opacity: 0.8; }
-
 /* ── Link styles ── */
 .link-muted { color: var(--muted-foreground); font-size: 0.86em; transition: color 0.13s; }
 .link-muted:hover { color: var(--ds-accent); }
