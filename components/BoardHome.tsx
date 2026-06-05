@@ -422,7 +422,7 @@ export function BoardHome({ resources, totalCount }: Props) {
                       }}
                       placeholder="search, paste a link, or describe what you're building…"
                       autoComplete="off" spellCheck={false}
-                      onFocus={async () => {
+                      onClick={async () => {
                         try {
                           const text = await navigator.clipboard.readText();
                           if (text && looksLikeUrl(text.trim()) && !clipDismissed) setClip(text.trim());
