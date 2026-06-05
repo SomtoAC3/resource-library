@@ -237,6 +237,11 @@ export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
                       ref={inputRef}
                       value={url}
                       onChange={(e) => { setUrl(e.target.value); setError(null); }}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const text = (e.clipboardData?.getData("text") ?? "").trim();
+                        setUrl(text); setError(null);
+                      }}
                       placeholder="https://example.com"
                       autoComplete="off"
                       spellCheck={false}
