@@ -7,7 +7,7 @@ import {
   useCallback,
   CSSProperties,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MemoCard } from "./MemoCard";
 import { AddResourceModal } from "./AddResourceModal";
@@ -190,6 +190,7 @@ interface Props {
 
 export function BoardHome({ resources, totalCount }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const stageRef = useRef<HTMLDivElement>(null);
   const searchWrapRef = useRef<HTMLDivElement>(null);
   const sugDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -226,6 +227,16 @@ export function BoardHome({ resources, totalCount }: Props) {
     initialize(resources.slice(0, 6).map(r => r.id));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardReady, initialized]);
+
+  // Handle URLs shared from the iOS share sheet via Web Share Target (/share?url=...)
+  useEffect(() => {
+    const shared = searchParams.get("share");
+    if (shared) {
+      setAddUrl(toFullUrl(shared));
+      router.replace("/", { scroll: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Compute live scatter positions from saved or default layout
   useEffect(() => {
@@ -379,15 +390,17 @@ export function BoardHome({ resources, totalCount }: Props) {
             </div>
           ) : (
             <>
-              <p className="eyebrow" style={{ marginBottom: 12 }}>
-                the design stash · {totalCount} pinned
-              </p>
-              <h1 style={{ fontSize: "clamp(1.6rem, 3.6vw, 2.15rem)", fontWeight: 700, letterSpacing: "-0.022em", lineHeight: 1.1, margin: "0 0 8px" }}>
-                Found something good?
-              </h1>
-              <p style={{ fontSize: "0.98em", margin: "0 0 20px", color: "var(--muted-foreground)" }}>
-                Pin a link to stash it — or dig through the board around you.
-              </p>
+              <div className="home-hero">
+                <p className="eyebrow" style={{ marginBottom: 12 }}>
+                  the design stash · {totalCount} pinned
+                </p>
+                <h1 style={{ fontSize: "clamp(1.6rem, 3.6vw, 2.15rem)", fontWeight: 700, letterSpacing: "-0.022em", lineHeight: 1.1, margin: "0 0 8px" }}>
+                  Found something good?
+                </h1>
+                <p style={{ fontSize: "0.98em", margin: "0 0 20px", color: "var(--muted-foreground)" }}>
+                  Pin a link to stash it — or dig through the board around you.
+                </p>
+              </div>
 
               <div ref={searchWrapRef} className="suggestions-wrap">
                 <form onSubmit={handleSubmit} style={{ display: "flex", gap: 10 }}>
@@ -448,7 +461,7 @@ export function BoardHome({ resources, totalCount }: Props) {
                 ))}
               </div>
 
-              <div style={{ display: "flex", gap: 6, marginTop: 10, justifyContent: "center" }}>
+              <div className="home-type-filter" style={{ display: "flex", gap: 6, marginTop: 10, justifyContent: "center" }}>
                 {(["all", "resource", "reference"] as const).map(t => (
                   <button
                     key={t}

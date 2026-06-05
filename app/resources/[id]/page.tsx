@@ -69,7 +69,7 @@ export default async function ResourcePage({ params }: Props) {
   return (
     <div className="container fade-in" style={{ maxWidth: 880, paddingTop: 24, paddingBottom: 96 }}>
       {/* Back + actions */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+      <div className="resource-detail-top" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
         <Link href="/search" className="link-muted" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           <ArrowLeftIcon /> Back
         </Link>
@@ -87,7 +87,7 @@ export default async function ResourcePage({ params }: Props) {
       </div>
 
       {/* Hero thumbnail */}
-      <div style={{
+      <div className="resource-hero" style={{
         position: "relative",
         width: "100%",
         aspectRatio: "2.1 / 1",
