@@ -27,15 +27,6 @@ function LinkIcon() {
   );
 }
 
-function SearchIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.2-3.2" />
-    </svg>
-  );
-}
-
 function CloseIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -233,10 +224,8 @@ export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
               <form onSubmit={handleSubmit}>
                 <div style={{ display: "flex", gap: 8, marginBottom: type === "reference" ? 14 : 0 }}>
                   <div className="field field-md" style={{ flex: 1 }}>
-                    <span className="ico">
-                      {urlMode ? <LinkIcon /> : <SearchIcon />}
-                    </span>
                     <input
+                      style={{ paddingLeft: 14 }}
                       ref={inputRef}
                       value={url}
                       onChange={(e) => { setUrl(e.target.value); setError(null); }}
