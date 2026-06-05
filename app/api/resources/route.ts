@@ -39,6 +39,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "URL must use http or https" }, { status: 400 });
   }
 
+  // Probe the URL before saving — reject unreachable links and 404s immediately
+  try {
+    const probe = await fetch(fullUrl, {
+      method: "HEAD",
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; ResourceLibraryBot/1.0)" },
+      signal: AbortSignal.timeout(8_000),
+      redirect: "follow",
+    });
+    if (probe.status === 404) {
+      return NextResponse.json({ error: "That page doesn't exist — double-check the URL." }, { status: 422 });
+    }
+    // 405 = server doesn't allow HEAD but URL is real; allow other statuses through
+  } catch {
+    return NextResponse.json({ error: "Couldn't reach that URL — check the link and try again." }, { status: 422 });
+  }
+
   const normalizedUrl = normalizeUrl(fullUrl);
   const domain = parsed.hostname.toLowerCase().replace(/^www\./, "");
 
