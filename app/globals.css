@@ -367,6 +367,7 @@ body::before {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
+
 /* ── Home board stage ── */
 .home-canvas { width: 100%; }
 .board-stage {
@@ -545,15 +546,10 @@ body::before {
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  /* ── Homepage: natural flow with good padding ── */
-  .home-canvas {
-    min-height: calc(100svh - 90px);
-    display: flex;
-    flex-direction: column;
-  }
+  /* ── Homepage: search fills the viewport, pins scroll below ── */
+  .home-canvas { display: flex; flex-direction: column; }
   .board-stage {
-    flex: 1;
-    min-height: 0;
+    min-height: calc(100svh - 90px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -566,6 +562,7 @@ body::before {
   .home-type-filter { display: none; }
   .stage-hint { display: none; }
   .stage-foot { padding: 16px 0 32px; }
+
 
   /* ── Memo cards: hide eye label and pin toggle ── */
   .memo-eye { display: none; }
