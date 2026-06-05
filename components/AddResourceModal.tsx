@@ -233,9 +233,6 @@ export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
               <form onSubmit={handleSubmit}>
                 <div style={{ display: "flex", gap: 8, marginBottom: type === "reference" ? 14 : 0 }}>
                   <div className="field field-md" style={{ flex: 1 }}>
-                    <span className="ico">
-                      {urlMode ? <LinkIcon /> : <SearchIcon />}
-                    </span>
                     <input
                       ref={inputRef}
                       value={url}
