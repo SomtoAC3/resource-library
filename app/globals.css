@@ -531,6 +531,19 @@ body::before {
 .tag-link { color: var(--ds-fg-subtle); transition: color 0.13s; text-decoration: none; }
 .tag-link:hover { color: var(--ds-accent); }
 
+/* ── Paste link button (mobile only — iOS blocks background clipboard reads) ── */
+.paste-link-btn { display: none; }
+@media (max-width: 640px) {
+  .paste-link-btn {
+    display: block; width: 100%; margin-top: 10px;
+    background: none; border: 1px dashed var(--ds-border-strong);
+    border-radius: calc(var(--radius) * 0.9); padding: 10px;
+    font: inherit; font-size: 0.88em; color: var(--ds-fg-subtle);
+    cursor: pointer; transition: border-color 0.15s, color 0.15s;
+  }
+  .paste-link-btn:hover { border-color: var(--ds-accent); color: var(--foreground); }
+}
+
 /* Pin button always visible on touch devices (no hover) */
 @media (hover: none) {
   .memo-pin-btn { opacity: 1; transform: scale(1); }

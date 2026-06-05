@@ -431,6 +431,25 @@ export function BoardHome({ resources, totalCount }: Props) {
                   </button>
                 </form>
 
+                {/* Mobile-only: iOS blocks automatic clipboard reads, so offer a tap to check */}
+                {!clip && (
+                  <button
+                    type="button"
+                    className="paste-link-btn"
+                    onClick={async () => {
+                      try {
+                        const text = await navigator.clipboard.readText();
+                        if (text && looksLikeUrl(text.trim())) {
+                          setClipDismissed(false);
+                          setClip(text.trim());
+                        }
+                      } catch { /* permission denied */ }
+                    }}
+                  >
+                    📋 Paste a link
+                  </button>
+                )}
+
                 {sugOpen && suggestions.length > 0 && (
                   <div className="suggestions" role="listbox">
                     {suggestions.map((s, i) => {
