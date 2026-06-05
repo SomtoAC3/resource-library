@@ -205,6 +205,7 @@ export function BoardHome({ resources, totalCount }: Props) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [sugOpen, setSugOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
 
   const mode = detectMode(value);
   const urlMode = mode === "submit";
@@ -227,6 +228,26 @@ export function BoardHome({ resources, totalCount }: Props) {
     initialize(resources.slice(0, 6).map(r => r.id));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardReady, initialized]);
+
+  // Auto-dismiss error toast
+  useEffect(() => {
+    if (!errorToast) return;
+    const t = setTimeout(() => setErrorToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [errorToast]);
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text && looksLikeUrl(text.trim())) {
+        setAddUrl(toFullUrl(text.trim()));
+      } else {
+        setErrorToast("Copy a link first");
+      }
+    } catch {
+      setErrorToast("Copy a link first");
+    }
+  };
 
   // Handle URLs shared from the iOS share sheet via Web Share Target (/share?url=...)
   useEffect(() => {
@@ -398,7 +419,7 @@ export function BoardHome({ resources, totalCount }: Props) {
                   Found something good?
                 </h1>
                 <p style={{ fontSize: "0.98em", margin: "0 0 20px", color: "var(--muted-foreground)" }}>
-                  Pin a link to stash it<span className="home-hero-secondary"> — or dig through the board around you</span>.
+                  <button className="paste-trigger" onClick={handlePaste}>Paste</button> a link to stash it<span className="home-hero-secondary"> — or dig through the board around you</span>.
                 </p>
               </div>
 
@@ -422,12 +443,6 @@ export function BoardHome({ resources, totalCount }: Props) {
                       }}
                       placeholder="search, paste a link, or describe what you're building…"
                       autoComplete="off" spellCheck={false}
-                      onClick={async () => {
-                        try {
-                          const text = await navigator.clipboard.readText();
-                          if (text && looksLikeUrl(text.trim()) && !clipDismissed) setClip(text.trim());
-                        } catch { /* permission denied or not supported */ }
-                      }}
                     />
                   </div>
                   <button type="submit" disabled={!value.trim()}
@@ -495,6 +510,7 @@ export function BoardHome({ resources, totalCount }: Props) {
       </div>
 
       {addUrl && <AddResourceModal onClose={() => setAddUrl(null)} initialUrl={addUrl} />}
+      {errorToast && <div className="toast">{errorToast}</div>}
     </div>
   );
 }
