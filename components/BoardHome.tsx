@@ -479,15 +479,6 @@ export function BoardHome({ resources, totalCount }: Props) {
         </div>
       </div>
 
-      {/* Mobile: pins as a simple card grid below the search — desktop shows scatter-around instead */}
-      {boardReady && visibleResources.length > 0 && (
-        <div className="mobile-pin-grid">
-          {visibleResources.map(r => (
-            <MemoCard key={r.id} resource={r} />
-          ))}
-        </div>
-      )}
-
       <div className="stage-foot">
         <Link href="/search" className="tertiary-link">
           see the whole stash <ArrowRightIcon />

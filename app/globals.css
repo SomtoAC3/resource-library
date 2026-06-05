@@ -367,8 +367,6 @@ body::before {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* ── Mobile pin grid (hidden on desktop — scatter-around handles it there) ── */
-.mobile-pin-grid { display: none; }
 
 /* ── Home board stage ── */
 .home-canvas { width: 100%; }
@@ -557,14 +555,6 @@ body::before {
   .stage-hint { display: none; }
   .stage-foot { padding: 16px 0 32px; }
 
-  /* Mobile pin grid */
-  .mobile-pin-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    justify-content: center;
-    padding: 0 16px 8px;
-  }
 
   /* ── Memo cards: hide eye label and pin toggle ── */
   .memo-eye { display: none; }
