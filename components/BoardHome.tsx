@@ -265,9 +265,10 @@ export function BoardHome({ resources, totalCount }: Props) {
     savePosition(id, x, y);
   }, [savePosition]);
 
-  // Clipboard awareness — open modal on explicit paste only
+  // Clipboard awareness — open modal on paste outside of input/textarea fields
   useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
+      if ((e.target as Element)?.closest?.("input, textarea")) return;
       const t = e.clipboardData?.getData("text") ?? "";
       if (looksLikeUrl(t.trim())) setAddUrl(toFullUrl(t.trim()));
     };
