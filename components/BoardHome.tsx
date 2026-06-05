@@ -398,7 +398,7 @@ export function BoardHome({ resources, totalCount }: Props) {
                   Found something good?
                 </h1>
                 <p style={{ fontSize: "0.98em", margin: "0 0 20px", color: "var(--muted-foreground)" }}>
-                  Pin a link to stash it — or dig through the board around you.
+                  Pin a link to stash it<span className="home-hero-secondary"> — or dig through the board around you</span>.
                 </p>
               </div>
 
