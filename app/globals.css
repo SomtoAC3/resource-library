@@ -584,4 +584,8 @@ body::before {
 
   /* Search sticky header: tighter on mobile */
   .search-sticky { padding: 10px 0; }
+
+  /* Homepage search: hide icon so cursor starts flush left */
+  .stage-center .field .ico { display: none; }
+  .stage-center .field input { padding-left: 14px; }
 }

@@ -38,8 +38,11 @@ export function extractKeywords(sentence: string): string {
 export function looksLikeUrl(value: string): boolean {
   const t = value.trim();
   if (!t || /\s/.test(t)) return false;
-  if (/^https?:\/\//i.test(t)) return true;
-  return /^(www\.)?[a-zA-Z0-9]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}(\/\S*)?$/.test(t);
+  if (/^https?:\/\//i.test(t)) {
+    try { new URL(t); return true; } catch { return false; }
+  }
+  if (!/^(www\.)?[a-zA-Z0-9]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}(\/\S*)?$/.test(t)) return false;
+  try { new URL(`https://${t}`); return true; } catch { return false; }
 }
 
 /** Ensures a string has a https:// protocol prefix */
