@@ -79,7 +79,11 @@ export function AddResourceModal({ onClose, initialUrl = "" }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (inputRef.current) inputRef.current.focus();
+    const el = inputRef.current;
+    if (!el) return;
+    el.focus();
+    const len = el.value.length;
+    el.setSelectionRange(len, len);
   }, []);
 
   const trimmed = url.trim();
