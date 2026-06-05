@@ -265,26 +265,14 @@ export function BoardHome({ resources, totalCount }: Props) {
     savePosition(id, x, y);
   }, [savePosition]);
 
-  // Clipboard awareness — go straight to modal, skip the intermediate banner
+  // Clipboard awareness — open modal on explicit paste only
   useEffect(() => {
-    let cancelled = false;
-    const consider = (text: string) => {
-      const t = text.trim();
-      if (!cancelled && t && looksLikeUrl(t)) setAddUrl(toFullUrl(t));
-    };
-    const tryRead = async () => {
-      try { if (navigator.clipboard?.readText) consider(await navigator.clipboard.readText()); }
-      catch { /* permission denied */ }
-    };
-    tryRead();
-    const onFocus = () => tryRead();
     const onPaste = (e: ClipboardEvent) => {
       const t = e.clipboardData?.getData("text") ?? "";
       if (looksLikeUrl(t.trim())) setAddUrl(toFullUrl(t.trim()));
     };
-    window.addEventListener("focus", onFocus);
     window.addEventListener("paste", onPaste);
-    return () => { cancelled = true; window.removeEventListener("focus", onFocus); window.removeEventListener("paste", onPaste); };
+    return () => window.removeEventListener("paste", onPaste);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
