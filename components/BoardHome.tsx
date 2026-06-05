@@ -373,7 +373,6 @@ export function BoardHome({ resources, totalCount }: Props) {
               <div ref={searchWrapRef} className="suggestions-wrap">
                 <form onSubmit={handleSubmit} style={{ display: "flex", gap: 10 }}>
                   <div className="field field-lg" style={{ flex: 1 }}>
-                    <span className="ico">{urlMode ? <LinkIcon /> : <SearchIcon />}</span>
                     <input
                       value={value}
                       onChange={e => {

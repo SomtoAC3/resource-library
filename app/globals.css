@@ -170,7 +170,7 @@ body::before {
 }
 .field input {
   flex: 1; min-width: 0; border: 0; background: transparent; outline: none;
-  font: inherit; color: var(--foreground); padding: 0 6px 0 36px; height: 100%;
+  font: inherit; color: var(--foreground); padding: 0 6px 0 12px; height: 100%;
 }
 .field input::placeholder { color: var(--ds-fg-subtle); }
 .field-lg { height: 52px; font-size: 1.02em; box-shadow: var(--ds-shadow-sm); }
