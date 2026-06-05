@@ -545,7 +545,7 @@ body::before {
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  /* ── Homepage: full-height canvas, centered search, footer below ── */
+  /* ── Homepage: natural flow with good padding ── */
   .home-canvas {
     min-height: calc(100svh - 90px);
     display: flex;
@@ -555,15 +555,14 @@ body::before {
     flex: 1;
     min-height: 0;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 24px 0 12px;
+    padding: 40px 0 20px;
   }
-  .stage-center { padding: 0 4px; }
-  .home-hero { display: none; }
+  .stage-center { padding: 0 20px; }
   .home-type-filter { display: none; }
   .stage-hint { display: none; }
-  .stage-foot { padding: 12px 0 28px; }
+  .stage-foot { padding: 16px 0 32px; }
 
   /* Category chips: scroll horizontally without wrapping */
   .stage-cats {
@@ -576,6 +575,10 @@ body::before {
     margin-top: 14px;
   }
   .stage-cats::-webkit-scrollbar { display: none; }
+
+  /* ── Memo cards: hide eye label and pin toggle ── */
+  .memo-eye { display: none; }
+  .memo-pin-btn { display: none; }
 
   /* ── Search/grid pages: smaller memo cards ── */
   :root { --memo-size: 168px; }
